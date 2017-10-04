@@ -3,14 +3,14 @@
 #include "tinygl.h"
 #include "navswitch.h"
 #include "ir_uart.h"
-#include "game.h"
 
 #define NUM_PLAYERS 2 //max players
+#define NUM_SPECIALS 2 //max specials
 #define TIME_LIMIT 60000 // 1 min in miliseconds
 #define PLAYER 0 // set player for this unit
-#define SPEED  // set standard speed
-#define UP_SPEED  // set power up speed
-#define DOWN_SPEED  //set power down speed
+#define STANDARD_SPEED ??// set standard speed
+#define UP_SPEED  ??// set power up speed
+#define DOWN_SPEED  ??//set power down speed
 
 /* Define polling rates in Hz  */
 #define NAVSWITCH_TASK_RATE ???
@@ -19,16 +19,42 @@
 
 
 
-enum direction {NORTH, EAST, WEST, SOUTH};
+typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
-enum special {SPEED_UP, SLOW_DOWN};
-    
+typedef enum{SPEED_UP, SLOW_DOWN} Special;
+ 
+ 
+typedef struct special_struct
+{
+    tinygl_point_t pos;
+    Special special;
+    bool is_active;
+} special_t;    
+
 
 typedef struct player_struct
 {
     tinygl_point_t pos;
     bool is_runner;
+    uint8_t speed;
 } player_t;
+
+
+/* Checks to see if the players have ended up at the same co-ords
+ * this will indicate if the runner has been caught by the chaser
+ * @param the list of players
+ * @return true if players are at same co-ords
+ */ 
+bool player_caught (player_t* players) 
+{
+    bool caught = false;
+    if ((players[0].pos.x == players[1].pos.x) && (players[0].pos.y == players[1].pos.y))
+    { 
+        caught = true;
+    }
+    return caught;
+}
+
 
 /* Creates both players and places them in random locations
  * on the matrix, ensuring they do not start in the same spot
@@ -47,15 +73,20 @@ void create_players (player_t* players)
         do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && !player_caught(&players)) //make sure both players start in different spaces.
+        } while (i > 0 && !player_caught(players)); //make sure both players start in different spaces.
     
         players[i].pos.x = x;
         players[i].pos.y = y;
         players[i].is_runner = runner;
+        players[i].speed = STANDARD_SPEED;
         
         runner = !runner; //make both players have different roles
         
         tinygl_draw_point (players[i].pos, 1); // 1 for on
+        if (i == PLAYER && players[i].is_runner == 0) {
+            //**TODO**//
+            //turn on the blue LED to indicate this is a chaser.
+        }
     }
 }
 
@@ -63,25 +94,24 @@ void create_players (player_t* players)
 
 /* Polls the navswitch and sets the direction for the player
  * to move in
- * @param the list of players
  * @param the current direction to be updated
  */ 
-void get_move (player_t* players, direction* current)
+void get_move (Direction* current)
 {
     navswitch_update();
     
     if (navswitch_push_event_p (NAVSWITCH_NORTH)) 
     { 
-        current = NORTH;
+        *current = NORTH;
     } else if (navswitch_push_event_p (NAVSWITCH_SOUTH))  
     {
-        current = SOUTH;
+        *current = SOUTH;
     } else if (navswitch_push_event_p (NAVSWITCH_EAST)) 
     { 
-        current = EAST;
+        *current = EAST;
     } else if (navswitch_push_event_p (NAVSWITCH_WEST))
     {
-        current = WEST;
+        *current = WEST;
     }
 
 }
@@ -89,53 +119,36 @@ void get_move (player_t* players, direction* current)
 /* moves the player of this machiene in the direction stated 
  * @param the direction to move in
  * @param the list of players
- * @returns the new point co-ords of the player for this machiene
  */ 
-tinygl_point_t move_player (direction* new, player_t* players)
+void move_player (player_t* players, Direction* new)
 {
-    if (new == NORTH) {
-        player[PLAYER].pos.y++;
-        if (player[PLAYER].pos.y == TINYGL_HEIGHT) 
+    if (*new == NORTH) {
+        players[PLAYER].pos.y++;
+        if (players[PLAYER].pos.y == TINYGL_HEIGHT) 
         {
-            player[PLAYER].pos.y = 0;
+            players[PLAYER].pos.y = 0;
         }
-    } else if (new == EAST) {
-        player[PLAYER].pos.x++;
-        if (player[PLAYER].pos.x == TINYGL_WIDTH) 
+    } else if (*new == EAST) {
+        players[PLAYER].pos.x++;
+        if (players[PLAYER].pos.x == TINYGL_WIDTH) 
         {
-            player[PLAYER].pos.x = 0;
+            players[PLAYER].pos.x = 0;
         }
-    } else if (new == SOUTH) {
-        player[PLAYER].pos.y--;
-        if (player[PLAYER].pos.y == TINYGL_HEIGHT) 
+    } else if (*new == SOUTH) {
+        players[PLAYER].pos.y--;
+        if (players[PLAYER].pos.y == TINYGL_HEIGHT) 
         {
-            player[PLAYER].pos.y = 0;
+            players[PLAYER].pos.y = 0;
         }
-    } else if new == WEST) {
-        player[PLAYER].pos.x--;
-        if (player[PLAYER].pos.x == TINYGL_WIDTH) 
+    } else if (*new == WEST) {
+        players[PLAYER].pos.x--;
+        if (players[PLAYER].pos.x == TINYGL_WIDTH) 
         {
-            player[PLAYER].pos.x = 0;
+            players[PLAYER].pos.x = 0;
         }
     }
-    return player[PLAYER].pos;
 }
 
-
-/* Checks to see if the players have ended up at the same co-ords
- * this will indicate if the runner has been caught by the chaser
- * @param the list of players
- * @return true if players are at same co-ords
- */ 
-bool player_caught (player_t* players) 
-{
-    uint8_t caught = 0;
-    if (player[0].pos == player[1].pos)
-    { 
-        caught = 1;
-    }
-    return caught;
-}
 
 /* Swaps over the status of runner so the runner becomes the chaser
  * and the chaser becomes the runner
@@ -143,62 +156,171 @@ bool player_caught (player_t* players)
  */ 
 void swap (player_t* players) 
 {
-    if (player[0].is_runner) {
-        player[0].is_runner = 0;
-        player[1].is_runner = 1;
+    if (players[0].is_runner) {
+        players[0].is_runner = 0;
+        players[1].is_runner = 1;
+        //**TODO**//
+            //turn on the blue LED for players[1] to indicate this is no longer a chaser.
     } else {
-        player[0].is_runner = 1;
-        player[1].is_runner = 0;
+        players[0].is_runner = 1;
+        players[1].is_runner = 0;
+        //**TODO**//
+            //turn off the blue LED for players[0] to indicate this is a chaser.
     }
 }
 
 
-/* 
- * 
+/* Creates both specials and places them in random locations
+ * on the matrix, ensuring they do not start in the same spot
+ * set to off (!active) initially.
+ * @params the list of specials to be populated
  */
- void create_special (void)
- {
-     continue;
- } 
+void create_specials (special_t* specials)
+{
+    uint8_t i;
 
-/*
- * 
+    for (i = 0; i < NUM_SPECIALS; i++)
+    {
+        uint8_t x;
+        uint8_t y;
+        
+        do { //randomly draw co-ords within our matrix
+            x = rand () % TINYGL_WIDTH;
+            y = rand () % TINYGL_HEIGHT;
+        } while (i > 0 && ((x == specials[0].pos.x) && y == specials[0].pos.y )); //make sure both specials appear in different spaces.
+        
+        specials[i].pos.x = x;
+        specials[i].pos.y = y;
+        specials[i].special = i; //make sure specials have differenet Special enum values
+        specials[i].is_active = 0;
+         
+    }
+} 
+
+
+/* Turns on the LED relating to the pos of the special
+ * sets the flash rate of the special according to its Special enum value
+ * @param the special that needs turning on.
  */
- void apply_special (player_t* players, special power)
- {
-     continue;
- }
+void turnon_specials (special_t* special) 
+{
+    break;
+      //**TODO**//
+    // set the led of the specials to on at rate relating to type of special.
+
+}
+
+
+/* Turns off the LED relating to the pos of the special
+ * @param the special that needs turning off.
+ */
+void turnoff_specials (special_t* special) 
+{
+    break;
+      //**TODO**//
+    // set the led of the specials to off.
+}
+ 
+/* turns off the specials leds, shuffles their positions 
+ * then turns on the specials leds.
+ * @param specials list to be shuffled.
+ */
+void shuffle_specials (special_t* specials) 
+{
+    uint8_t i;
+    for (i = 0; i < NUM_SPECIALS; i++) 
+    {
+        turnoff_specials(&specials[i]);
+    }
+    create_specials(specials); 
+    for (i = 0; i < NUM_SPECIALS; i++) 
+    {   
+        turnon_specials(&specials[i]);
+    }
+}  
+
+
+
+/* Applies the speedup/slowdown special to the players speed
+ * @param players: the list of players
+ * @param specials: the list of specials
+ * @param collision: the index of the collided with special
+ */
+void apply_special (player_t* players, special_t* specials, uint8_t collision)
+{
+
+    if (specials[collision].special == SPEED_UP) {
+        players[PLAYER].speed = UP_SPEED;
+    } else {
+        players[PLAYER].speed = DOWN_SPEED;
+    }
+
+}
+
+/* Checks the position of the player along with the position of the specials
+ * if the specials are active, and a collison has occured, 
+ * turn off the led of the collided with special and return the index of that special.
+ * @param the list of current players
+ * @param the list of specials
+ * @return the index of the special that has been collided with or -1
+ */
+uint8_t collision_special (player_t* players, special_t* specials)
+{
+    uint8_t i;
+    
+    for (i = 0; i < NUM_SPECIALS; i++) {
+        if (((players[PLAYER].pos.x == specials[i].pos.x) && (players[PLAYER].pos.y == specials[i].pos.y)) && specials[i].is_active) {
+            specials[i].is_active = 0;
+            turnoff_specials(&specials[i]);
+            return i;
+        }
+    }
+    return -1;
+}  
 
 
 int main (void)
 {
+    // create variables for game
+    player_t players[NUM_PLAYERS];
+    special_t specials[NUM_SPECIALS];
+    
+    int8_t collision;
+    Direction current_direction;
+    
+    // initialize things
     system_init ();
 
     tinygl_init (DISPLAY_TASK_RATE);
     
     navswitch_init();
+        
+    create_players (players);
     
-    
-    player_t players[NUM_PLAYERS];
-    
-    create_players(&players);
-    
-    direction current_direction;
+    create_specials (specials);
+
 
     while (1)
     {
+          //**TODO**//
         // set up a task scheduler to poll navswitch, 
         // place specials, IR polling,
         // update location of runner, update location of chaser.
         // (rate of runner/chaser update will depend on active specials)
+        // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
-            get_move(&players, &current_direction);
+            get_move(&current_direction);
         
-            tinygl_draw_point (player[PLAYER].pos, 0); // temp turn off point to stop ghosting
-            move_player(current_direction);
-            tinygl_draw_point (player[PLAYER].pos, 1);
-            if (player_caught(&players)) {
-                swap();
+            tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
+            move_player(players, &current_direction);
+            tinygl_draw_point (players[PLAYER].pos, 1);
+            if (player_caught (players)) {
+                swap(players);
+            }
+            collision = collision_special (players, specials);
+            if (collision != -1) {
+                apply_special(players, specials, collision);
+                collision = -1;
             }
     }
 }
