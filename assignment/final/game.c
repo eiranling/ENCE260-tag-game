@@ -3,6 +3,7 @@
 #include "tinygl.h"
 #include "navswitch.h"
 #include "ir_uart.h"
+#include "task.h"
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
