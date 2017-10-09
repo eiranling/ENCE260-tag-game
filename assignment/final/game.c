@@ -5,6 +5,7 @@
 #include "ir_uart.h"
 #include "task.h"
 #include "pacer.h"
+#include "led.h"
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
@@ -23,16 +24,16 @@
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
-//typedef enum{SPEED_UP, SLOW_DOWN} Special;
+typedef enum{SPEED_UP, SLOW_DOWN} Special;
  
-/*
+
 typedef struct special_struct
 {
     tinygl_point_t pos;
     Special special;
     bool is_active;
 } special_t;    
-*/
+
 
 typedef struct player_struct
 {
@@ -47,7 +48,7 @@ typedef struct player_struct
  * this will indicate if the runner has been caught by the chaser
  * @param the list of players
  * @return true if players are at same co-ords
-  
+*/
 bool player_caught (player_t* players) 
 {
     bool caught = false;
@@ -73,10 +74,10 @@ void create_players (player_t* players)
         uint8_t x;
         uint8_t y;
         
-        //do { //randomly draw co-ords within our matrix
+        do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        //} while (i > 0 /*&& !player_caught(players)*/); //make sure both players start in different spaces.
+        } while (player_caught(players)); //make sure both players start in different spaces.
     
         players[i].pos.x = x;
         players[i].pos.y = y;
@@ -88,7 +89,7 @@ void create_players (player_t* players)
         tinygl_draw_point (players[i].pos, 1); // 1 for on
         if (i == PLAYER && players[i].is_runner == 0) {
             //**TODO/
-            //turn on the blue LED to indicate this is a chaser.
+            led_set(LED1, 1);
         }
     }
 }
@@ -156,19 +157,19 @@ void move_player (/*player_t*/tinygl_point_t* pos, Direction* new)
 /* Swaps over the status of runner so the runner becomes the chaser
  * and the chaser becomes the runner
  * @param the list of active players
-
+*/
 void swap (player_t* players) 
 {
     if (players[0].is_runner) {
         players[0].is_runner = 0;
         players[1].is_runner = 1;
-        //**TODO//
-            //turn on the blue LED for players[1] to indicate this is no longer a chaser.
+        //**TODO**//
+            
     } else {
         players[0].is_runner = 1;
         players[1].is_runner = 0;
-        //**TODO//
-            //turn off the blue LED for players[0] to indicate this is a chaser.
+        //**TODO**//
+            led_set(LED1, 0);
     }
 }
 
@@ -177,7 +178,7 @@ void swap (player_t* players)
  * on the matrix, ensuring they do not start in the same spot
  * set to off (!active) initially.
  * @params the list of specials to be populated
- 
+ */
 void create_specials (special_t* specials)
 {
     uint8_t i;
@@ -287,10 +288,10 @@ int main (void)
     
     // create variables for game
     player_t players[NUM_PLAYERS];
-    /*
+    
     special_t specials[NUM_SPECIALS];
     
-    int8_t collision;*/
+    /*int8_t collision;*/
     //Direction current_direction;
     
     
@@ -303,8 +304,9 @@ int main (void)
     pacer_init(1000);
     create_players (players);
     
-    //create_specials (specials);
+    create_specials (specials);
     
+    led_init();
 
     uint8_t counter = 0;
     uint8_t s_counter = 0;
@@ -313,7 +315,7 @@ int main (void)
     {
         pacer_wait();
         tinygl_draw_point(players[0].pos, 1);
-        //tinygl_draw_point(players[1].pos, 1);
+        tinygl_draw_point(players[1].pos, 1);
         tinygl_update();
           //**TODO**//
 		  //Sets up scheduled tasks
@@ -334,7 +336,7 @@ int main (void)
 			//**TODO**//
 			//Move this into it's own separate function for task scheduling
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
-        if (counter == 150) {
+        if (counter == 200) {
             counter = 0;
             tinygl_draw_point(players[0].pos, 0);
             move_player(&players[0].pos, &players[0].current_direction);
@@ -343,10 +345,13 @@ int main (void)
         }
         
         
-        if (s_counter == 100) {
+        if (s_counter == 175) {
             s_counter = 0;
-            tinygl_draw_point(players[1].pos, !s_state);
+            tinygl_draw_point(specials[1].pos, !s_state);
             s_state = !s_state;
+        }
+        if (player_caught(players)) {
+            swap(players);
         }
         
         counter++;
