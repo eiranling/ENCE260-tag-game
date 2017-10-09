@@ -9,6 +9,7 @@
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
+#define NUM_IR_CODES 6 //total number of IR codes
 #define TIME_LIMIT 60000 // 1 min in miliseconds
 #define PLAYER 0 // set player for this unit
 #define STANDARD_SPEED 2// set standard speed
@@ -20,7 +21,7 @@
 
 #define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
 
-
+char input[NUM_IR_CODES] = {N, S, E, W, X, U, D}
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
@@ -124,7 +125,7 @@ void get_move (Direction* current)
  * @param the direction to move in
  * @param the list of players
 */
-void move_player (/*player_t*/tinygl_point_t* pos, Direction* new)
+void move_player (player_t* pos, Direction* new)
 {
     if (*new == SOUTH) {
         pos->y++;
@@ -283,6 +284,29 @@ uint8_t collision_special (player_t* players, special_t* specials)
 }  
 */
 
+
+void receive_IR (char* input) 
+{
+    char recieved;
+    uint8_t i;
+    if (ir_uart_read_ready_p()) {
+    received = ir_uart_getc();
+    for (i = 0; i < NUM_IR_CODES; i++) {
+        if (received == *input[i]){
+            update_game(input[i]);
+        }
+    }
+}
+
+void update_game (char* received)
+{
+    switch (*received) {
+        case(N):
+            
+}
+
+
+
 int main (void)
 {
     
@@ -297,6 +321,7 @@ int main (void)
     
     // initialize things
     system_init ();
+    ir_uart_init(); 
 
     tinygl_init (DISPLAY_TASK_RATE);
     navswitch_init();
@@ -318,11 +343,11 @@ int main (void)
         tinygl_draw_point(players[1].pos, 1);
         tinygl_update();
           //**TODO**//
-		  //Sets up scheduled tasks
-		//task_t tasks[] = {
-		//	{.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE, .data = },
-		//	{.func = update_player_pos(players, &current_direction), .period / DISPLAY_TASK_RATE}
-		//}
+          //Sets up scheduled tasks
+        //task_t tasks[] = {
+        //  {.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE, .data = },
+        //  {.func = update_player_pos(players, &current_direction), .period / DISPLAY_TASK_RATE}
+        //}
         // set up a task scheduler to poll navswitch, 
         // place specials, IR polling,
         // update location of runner, update location of chaser.
@@ -332,14 +357,14 @@ int main (void)
         get_move(&players[0].current_direction);
         
         
-			
-			//**TODO**//
-			//Move this into it's own separate function for task scheduling
+            
+            //**TODO**//
+            //Move this into it's own separate function for task scheduling
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
         if (counter == 200) {
             counter = 0;
             tinygl_draw_point(players[0].pos, 0);
-            move_player(&players[0].pos, &players[0].current_direction);
+            move_player(&players[0], &players[0].current_direction);
             tinygl_draw_point(players[0].pos, 1);
             tinygl_update();
         }
@@ -357,9 +382,9 @@ int main (void)
         counter++;
         s_counter++; 
         //tinygl_draw_point (players[PLAYER].pos, 1);
-			
-			//**TODO**//
-			//Move this into it's own separate function for task scheduling
+            
+            //**TODO**//
+            //Move this into it's own separate function for task scheduling
             //if (player_caught (players)) {
              //   swap(players);
             //}
