@@ -8,14 +8,14 @@
 #define NUM_SPECIALS 2 //max specials
 #define TIME_LIMIT 60000 // 1 min in miliseconds
 #define PLAYER 0 // set player for this unit
-#define STANDARD_SPEED ??// set standard speed
-#define UP_SPEED  ??// set power up speed
-#define DOWN_SPEED  ??//set power down speed
+#define STANDARD_SPEED 2// set standard speed
+#define UP_SPEED  3// set power up speed
+#define DOWN_SPEED  1//set power down speed
 
 /* Define polling rates in Hz  */
-#define NAVSWITCH_TASK_RATE ???
+#define NAVSWITCH_TASK_RATE 1000 //Poll the NAVSWITCH at 1000 Hz
 
-#define DISPLAY_TASK_RATE ???
+#define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
 
 
 
@@ -303,6 +303,11 @@ int main (void)
     while (1)
     {
           //**TODO**//
+		  //Sets up scheduled tasks
+		task_t tasks[] = {
+			{.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE },
+			{.func = update_player_pos(players, &current_direction), .period / DISPLAY_TASK_RATE}
+		}
         // set up a task scheduler to poll navswitch, 
         // place specials, IR polling,
         // update location of runner, update location of chaser.
@@ -310,10 +315,15 @@ int main (void)
         // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
             get_move(&current_direction);
-        
+			
+			//**TODO**//
+			//Move this into it's own separate function for task scheduling
             tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
             move_player(players, &current_direction);
             tinygl_draw_point (players[PLAYER].pos, 1);
+			
+			//**TODO**//
+			//Move this into it's own separate function for task scheduling
             if (player_caught (players)) {
                 swap(players);
             }
