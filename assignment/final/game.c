@@ -4,6 +4,7 @@
 #include "navswitch.h"
 #include "ir_uart.h"
 #include "task.h"
+#include "pacer.h"
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
@@ -21,25 +22,26 @@
 
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
+
+//typedef enum{SPEED_UP, SLOW_DOWN} Special;
+ 
 /*
-typedef enum{SPEED_UP, SLOW_DOWN} Special;
- 
- 
 typedef struct special_struct
 {
     tinygl_point_t pos;
     Special special;
     bool is_active;
 } special_t;    
-
+*/
 
 typedef struct player_struct
 {
     tinygl_point_t pos;
     bool is_runner;
     uint8_t speed;
+    Direction current_direction;
 } player_t;
-*/
+
 
 /* Checks to see if the players have ended up at the same co-ords
  * this will indicate if the runner has been caught by the chaser
@@ -60,7 +62,7 @@ bool player_caught (player_t* players)
 /* Creates both players and places them in random locations
  * on the matrix, ensuring they do not start in the same spot
  * @params the list of players to be populated
-
+*/
 void create_players (player_t* players) 
 {
     uint8_t i;
@@ -71,10 +73,10 @@ void create_players (player_t* players)
         uint8_t x;
         uint8_t y;
         
-        do { //randomly draw co-ords within our matrix
+        //do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && !player_caught(players)); //make sure both players start in different spaces.
+        //} while (i > 0 /*&& !player_caught(players)*/); //make sure both players start in different spaces.
     
         players[i].pos.x = x;
         players[i].pos.y = y;
@@ -120,32 +122,32 @@ void get_move (Direction* current)
 /* moves the player of this machiene in the direction stated 
  * @param the direction to move in
  * @param the list of players
-
-void move_player (player_t* players, Direction* new)
+*/
+void move_player (/*player_t*/tinygl_point_t* pos, Direction* new)
 {
-    if (*new == NORTH) {
-        players[PLAYER].pos.y++;
-        if (players[PLAYER].pos.y == TINYGL_HEIGHT) 
+    if (*new == SOUTH) {
+        pos->y++;
+        if (pos->y > TINYGL_HEIGHT) 
         {
-            players[PLAYER].pos.y = 0;
+            pos->y = 0;
         }
     } else if (*new == EAST) {
-        players[PLAYER].pos.x++;
-        if (players[PLAYER].pos.x == TINYGL_WIDTH) 
+        pos->x++;
+        if (pos->x > TINYGL_WIDTH) 
         {
-            players[PLAYER].pos.x = 0;
+            pos->x = 0;
         }
-    } else if (*new == SOUTH) {
-        players[PLAYER].pos.y--;
-        if (players[PLAYER].pos.y == TINYGL_HEIGHT) 
+    } else if (*new == NORTH) {
+        pos->y--;
+        if (pos->y < 0) 
         {
-            players[PLAYER].pos.y = 0;
+            pos->y = TINYGL_HEIGHT;
         }
     } else if (*new == WEST) {
-        players[PLAYER].pos.x--;
-        if (players[PLAYER].pos.x == TINYGL_WIDTH) 
+        pos->x--;
+        if (pos->x < 0)
         {
-            players[PLAYER].pos.x = 0;
+            pos->x = TINYGL_WIDTH;
         }
     }
 }
@@ -282,37 +284,41 @@ uint8_t collision_special (player_t* players, special_t* specials)
 
 int main (void)
 {
-    /*
+    
     // create variables for game
     player_t players[NUM_PLAYERS];
+    /*
     special_t specials[NUM_SPECIALS];
     
     int8_t collision;*/
-    Direction current_direction;
+    //Direction current_direction;
     
     
     // initialize things
     system_init ();
 
     tinygl_init (DISPLAY_TASK_RATE);
-    tinygl_point_t pos;
-    pos.x = 1;
-    pos.y = 1;
     navswitch_init();
-        
-    //create_players (players);
+    
+    pacer_init(1000);
+    create_players (players);
     
     //create_specials (specials);
+    
 
-
+    uint8_t counter = 0;
+    uint8_t s_counter = 0;
+    bool s_state = 1;
     while (1)
     {
-        tinygl_draw_point(pos, 1);
+        pacer_wait();
+        tinygl_draw_point(players[0].pos, 1);
+        //tinygl_draw_point(players[1].pos, 1);
         tinygl_update();
           //**TODO**//
 		  //Sets up scheduled tasks
 		//task_t tasks[] = {
-		//	{.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE },
+		//	{.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE, .data = },
 		//	{.func = update_player_pos(players, &current_direction), .period / DISPLAY_TASK_RATE}
 		//}
         // set up a task scheduler to poll navswitch, 
@@ -321,13 +327,31 @@ int main (void)
         // (rate of runner/chaser update will depend on active specials)
         // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
-        get_move(&current_direction);
+        get_move(&players[0].current_direction);
+        
+        
 			
 			//**TODO**//
 			//Move this into it's own separate function for task scheduling
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
-        //    move_player(players, &current_direction);
-        //    tinygl_draw_point (players[PLAYER].pos, 1);
+        if (counter == 150) {
+            counter = 0;
+            tinygl_draw_point(players[0].pos, 0);
+            move_player(&players[0].pos, &players[0].current_direction);
+            tinygl_draw_point(players[0].pos, 1);
+            tinygl_update();
+        }
+        
+        
+        if (s_counter == 100) {
+            s_counter = 0;
+            tinygl_draw_point(players[1].pos, !s_state);
+            s_state = !s_state;
+        }
+        
+        counter++;
+        s_counter++; 
+        //tinygl_draw_point (players[PLAYER].pos, 1);
 			
 			//**TODO**//
 			//Move this into it's own separate function for task scheduling
