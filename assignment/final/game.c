@@ -3,7 +3,7 @@
 #include "tinygl.h"
 #include "navswitch.h"
 #include "ir_uart.h"
-#include "task.h"
+#include "pacer.h"
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
@@ -14,6 +14,9 @@
 #define DOWN_SPEED  1//set power down speed
 
 /* Define polling rates in Hz  */
+
+#define CYCLE_RATE 2000 //The tasks should run in at 2000Hz
+
 #define NAVSWITCH_TASK_RATE 1000 //Poll the NAVSWITCH at 1000 Hz
 
 #define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
@@ -68,16 +71,18 @@ void create_players (player_t* players)
 
     for (i = 0; i < NUM_PLAYERS; i++)
     {
+	
         uint8_t x;
         uint8_t y;
         
         do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && !player_caught(players)); //make sure both players start in different spaces.
+        } while (i > 0 && player_caught(players)); //make sure both players start in different spaces.
     
         players[i].pos.x = x;
         players[i].pos.y = y;
+		
         players[i].is_runner = runner;
         players[i].speed = STANDARD_SPEED;
         
@@ -85,9 +90,10 @@ void create_players (player_t* players)
         
         tinygl_draw_point (players[i].pos, 1); // 1 for on
         if (i == PLAYER && players[i].is_runner == 0) {
-            //**TODO**//
+            //**TODO//
             //turn on the blue LED to indicate this is a chaser.
         }
+		
     }
 }
 
@@ -205,7 +211,6 @@ void create_specials (special_t* specials)
  */
 void turnon_specials (special_t* special) 
 {
-    break;
       //**TODO**//
     // set the led of the specials to on at rate relating to type of special.
 
@@ -217,7 +222,6 @@ void turnon_specials (special_t* special)
  */
 void turnoff_specials (special_t* special) 
 {
-    break;
       //**TODO**//
     // set the led of the specials to off.
 }
@@ -291,47 +295,47 @@ int main (void)
     
     // initialize things
     system_init ();
-
-    tinygl_init (DISPLAY_TASK_RATE);
-    
+	//display_init ();
+	
+    tinygl_init (DISPLAY_TASK_RATE);    
+	
     navswitch_init();
         
     create_players (players);
     
     create_specials (specials);
 
-
+	pacer_init(CYCLE_RATE);
+	
     while (1)
     {
+		pacer_wait();
           //**TODO**//
 		  //Sets up scheduled tasks
-		task_t tasks[] = {
-			{.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE },
-			{.func = update_player_pos(players, &current_direction), .period / DISPLAY_TASK_RATE}
-		}
         // set up a task scheduler to poll navswitch, 
         // place specials, IR polling,
         // update location of runner, update location of chaser.
         // (rate of runner/chaser update will depend on active specials)
         // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
-            get_move(&current_direction);
-			
-			//**TODO**//
-			//Move this into it's own separate function for task scheduling
-            tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
-            move_player(players, &current_direction);
-            tinygl_draw_point (players[PLAYER].pos, 1);
-			
-			//**TODO**//
-			//Move this into it's own separate function for task scheduling
-            if (player_caught (players)) {
-                swap(players);
-            }
-            collision = collision_special (players, specials);
-            if (collision != -1) {
-                apply_special(players, specials, collision);
-                collision = -1;
-            }
+		get_move(&current_direction);
+		
+		//**TODO**//
+		//Move this into it's own separate function for task scheduling
+		tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
+		move_player(players, &current_direction);
+		tinygl_pixel_set (/*players[PLAYER].*/pos, 0);
+		tinygl_update();
+		
+		//**TODO**//
+		//Move this into it's own separate function for task scheduling
+		if (player_caught (players)) {
+			swap(players);
+		}
+		collision = collision_special (players, specials);
+		if (collision != -1) {
+			apply_special(players, specials, collision);
+			collision = -1;
+		}
     }
 }
