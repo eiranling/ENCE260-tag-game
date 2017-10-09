@@ -165,6 +165,7 @@ void swap (player_t* players)
         players[0].is_runner = 0;
         players[1].is_runner = 1;
         //**TODO**//
+        //Put code to transmit the swapped roles
             
     } else {
         players[0].is_runner = 1;
@@ -206,30 +207,25 @@ void create_specials (special_t* specials)
 /* Turns on the LED relating to the pos of the special
  * sets the flash rate of the special according to its Special enum value
  * @param the special that needs turning on.
-
+ */
 void turnon_specials (special_t* special) 
 {
-    break;
-      //**TODO//
-    // set the led of the specials to on at rate relating to type of special.
-
+    tinygl_draw_point(special->pos, 1);
 }
 
 
 /* Turns off the LED relating to the pos of the special
  * @param the special that needs turning off.
-
+ */
 void turnoff_specials (special_t* special) 
 {
-    break;
-      //**TODO//
-    // set the led of the specials to off.
+    tinygl_draw_point(special->pos, 0);
 }
  
 /* turns off the specials leds, shuffles their positions 
  * then turns on the specials leds.
  * @param specials list to be shuffled.
- 
+ */
 void shuffle_specials (special_t* specials) 
 {
     uint8_t i;
@@ -334,8 +330,11 @@ int main (void)
     led_init();
 
     uint8_t counter = 0;
-    uint8_t s_counter = 0;
-    bool s_state = 1;
+    uint16_t s_counter = 0;
+    uint16_t s_timeout = 0;
+    bool s1_state = 1;
+    bool s2_state = 1;
+    
     while (1)
     {
         pacer_wait();
@@ -355,11 +354,7 @@ int main (void)
         // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
         get_move(&players[0].current_direction);
-        
-        
-            
-            //**TODO**//
-            //Move this into it's own separate function for task scheduling
+
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
         if (counter == 200) {
             counter = 0;
@@ -370,17 +365,29 @@ int main (void)
         }
         
         
-        if (s_counter == 175) {
+        if (s_counter == 500) {
             s_counter = 0;
-            tinygl_draw_point(specials[1].pos, !s_state);
-            s_state = !s_state;
+            tinygl_draw_point(specials[1].pos, !s1_state);
+            s1_state = !s1_state;
         }
+        
+        if (s_counter % 250 == 0) {
+            tinygl_draw_point(specials[0].pos, !s2_state);
+            s2_state = !s2_state;
+        }
+        
+        if (s_timeout == 20000) {
+            s_timeout = 0;
+            shuffle_specials(specials);
+        }
+        
         if (player_caught(players)) {
             swap(players);
         }
         
         counter++;
         s_counter++; 
+        s_timeout++;
         //tinygl_draw_point (players[PLAYER].pos, 1);
             
             //**TODO**//
