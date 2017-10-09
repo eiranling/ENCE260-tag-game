@@ -125,31 +125,31 @@ void get_move (Direction* current)
  * @param the list of players
  * @param player the index of the player to be moved
 */
-void move_player (player_t* players, Direction* new, uint8_t player)
+void move_player (player_t* players, Direction* new, uint8_t* player)
 {
     if (*new == SOUTH) {
-        players[player].pos.y++;
-        if (players[player].pos.y > TINYGL_HEIGHT -1) 
+        players[*player].pos.y++;
+        if (players[*player].pos.y > TINYGL_HEIGHT -1) 
         {
-            players[player].pos.y = TINYGL_HEIGHT -1;
+            players[*player].pos.y = TINYGL_HEIGHT -1;
         }
     } else if (*new == EAST) {
-        players[player].pos.x++;
-        if (players[player].pos.x > TINYGL_WIDTH -1) 
+        players[*player].pos.x++;
+        if (players[*player].pos.x > TINYGL_WIDTH -1) 
         {
-            players[player].pos.x = TINYGL_WIDTH -1;
+            players[*player].pos.x = TINYGL_WIDTH -1;
         }
     } else if (*new == NORTH) {
-       players[player].pos.y--;
-        if (players[player].pos.y < 0) 
+       players[*player].pos.y--;
+        if (players[*player].pos.y < 0) 
         {
-           players[player].pos.y = 0;
+           players[*player].pos.y = 0;
         }
     } else if (*new == WEST) {
-        players[player].pos.x--;
-        if (players[player].pos.x < 0)
+        players[*player].pos.x--;
+        if (players[*player].pos.x < 0)
         {
-            players[player].pos.x = 0;
+            players[*player].pos.x = 0;
         }
     }
 }
@@ -281,13 +281,22 @@ uint8_t collision_special (player_t* players, special_t* specials)
 */
 
 
-void update_game(char* received)
+void update_game(char* received, player_t* players, Direction* move, uint8_t* other_player)
 {
-
+    if (*received == 'N') {
+        *move = NORTH;
+    } else if (*received == 'S') {
+        *move = SOUTH;
+    } else if (*received == 'E') {
+        *move = EAST;
+    } else if (*received == 'W') {
+        *move = WEST;
+    }
+    move_player(players, move, other_player);
             
 }
 
-void receive_IR (char* input) 
+void receive_IR (char* input, player_t* players, Direction* move, uint8_t* other_player) 
 {
     char received;
     uint8_t i;
@@ -295,7 +304,7 @@ void receive_IR (char* input)
     received = ir_uart_getc();
     for (i = 0; i < NUM_IR_CODES; i++) {
         if (received == input[i]){
-            update_game(&input[i]);
+            update_game(&input[i], players, move, other_player);
         }
     }
     }
@@ -325,6 +334,7 @@ int main (void)
     
     pacer_init(1000);
     uint8_t PLAYER = 0; // set player for this unit will be according to who is host unit
+    uint8_t other_player = 1;
     
     create_players (players, PLAYER);
     
@@ -363,7 +373,7 @@ int main (void)
         if (counter == 200) {
             counter = 0;
             tinygl_draw_point(players[0].pos, 0);
-            move_player(players, &players[0].current_direction, PLAYER);
+            move_player(players, &players[0].current_direction, &PLAYER);
             tinygl_draw_point(players[0].pos, 1);
             tinygl_update();
         }
