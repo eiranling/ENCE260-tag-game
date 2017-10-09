@@ -9,9 +9,8 @@
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
-#define NUM_IR_CODES 6 //total number of IR codes
+#define NUM_IR_CODES 7 //total number of IR codes
 #define TIME_LIMIT 60000 // 1 min in miliseconds
-#define PLAYER 0 // set player for this unit
 #define STANDARD_SPEED 2// set standard speed
 #define UP_SPEED  3// set power up speed
 #define DOWN_SPEED  1//set power down speed
@@ -21,7 +20,7 @@
 
 #define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
 
-char input[NUM_IR_CODES] = {N, S, E, W, X, U, D}
+char input[NUM_IR_CODES] = {'N', 'S', 'E', 'W', 'X', 'U', 'D'};
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
@@ -65,7 +64,7 @@ bool player_caught (player_t* players)
  * on the matrix, ensuring they do not start in the same spot
  * @params the list of players to be populated
 */
-void create_players (player_t* players) 
+void create_players (player_t* players, uint8_t PLAYER) 
 {
     uint8_t i;
     uint8_t runner = 1;
@@ -124,32 +123,33 @@ void get_move (Direction* current)
 /* moves the player of this machiene in the direction stated 
  * @param the direction to move in
  * @param the list of players
+ * @param player the index of the player to be moved
 */
-void move_player (player_t* pos, Direction* new)
+void move_player (player_t* players, Direction* new, uint8_t player)
 {
     if (*new == SOUTH) {
-        pos->y++;
-        if (pos->y > TINYGL_HEIGHT) 
+        players[player].pos.y++;
+        if (players[player].pos.y > TINYGL_HEIGHT -1) 
         {
-            pos->y = 0;
+            players[player].pos.y = TINYGL_HEIGHT -1;
         }
     } else if (*new == EAST) {
-        pos->x++;
-        if (pos->x > TINYGL_WIDTH) 
+        players[player].pos.x++;
+        if (players[player].pos.x > TINYGL_WIDTH -1) 
         {
-            pos->x = 0;
+            players[player].pos.x = TINYGL_WIDTH -1;
         }
     } else if (*new == NORTH) {
-        pos->y--;
-        if (pos->y < 0) 
+       players[player].pos.y--;
+        if (players[player].pos.y < 0) 
         {
-            pos->y = TINYGL_HEIGHT;
+           players[player].pos.y = 0;
         }
     } else if (*new == WEST) {
-        pos->x--;
-        if (pos->x < 0)
+        players[player].pos.x--;
+        if (players[player].pos.x < 0)
         {
-            pos->x = TINYGL_WIDTH;
+            players[player].pos.x = 0;
         }
     }
 }
@@ -281,25 +281,26 @@ uint8_t collision_special (player_t* players, special_t* specials)
 */
 
 
+void update_game(char* received)
+{
+
+            
+}
+
 void receive_IR (char* input) 
 {
-    char recieved;
+    char received;
     uint8_t i;
     if (ir_uart_read_ready_p()) {
     received = ir_uart_getc();
     for (i = 0; i < NUM_IR_CODES; i++) {
-        if (received == *input[i]){
-            update_game(input[i]);
+        if (received == input[i]){
+            update_game(&input[i]);
         }
+    }
     }
 }
 
-void update_game (char* received)
-{
-    switch (*received) {
-        case(N):
-            
-}
 
 
 
@@ -323,11 +324,14 @@ int main (void)
     navswitch_init();
     
     pacer_init(1000);
-    create_players (players);
+    uint8_t PLAYER = 0; // set player for this unit will be according to who is host unit
+    
+    create_players (players, PLAYER);
     
     create_specials (specials);
     
     led_init();
+    
 
     uint8_t counter = 0;
     uint16_t s_counter = 0;
@@ -359,7 +363,7 @@ int main (void)
         if (counter == 200) {
             counter = 0;
             tinygl_draw_point(players[0].pos, 0);
-            move_player(&players[0], &players[0].current_direction);
+            move_player(players, &players[0].current_direction, PLAYER);
             tinygl_draw_point(players[0].pos, 1);
             tinygl_update();
         }
@@ -402,3 +406,4 @@ int main (void)
             //}
     }
 }
+
