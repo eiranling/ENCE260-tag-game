@@ -11,9 +11,9 @@
 #define NUM_SPECIALS 2 //max specials
 #define NUM_IR_CODES 7 //total number of IR codes
 #define TIME_LIMIT 60000 // 1 min in miliseconds
-#define STANDARD_SPEED 2// set standard speed
-#define UP_SPEED  3// set power up speed
-#define DOWN_SPEED  1//set power down speed
+#define STANDARD_SPEED 200// set standard speed
+#define UP_SPEED  100// set power up speed
+#define DOWN_SPEED  300//set power down speed
 
 /* Define polling rates in Hz  */
 #define NAVSWITCH_TASK_RATE 144 //Poll the NAVSWITCH at 1000 Hz
@@ -39,7 +39,7 @@ typedef struct player_struct
 {
     tinygl_point_t pos;
     bool is_runner;
-    uint8_t speed;
+    uint16_t speed;
     Direction current_direction;
 } player_t;
 
@@ -209,7 +209,8 @@ void create_specials (special_t* specials)
  * @param the special that needs turning on.
  */
 void turnon_specials (special_t* special) 
-{
+{	
+	special->is_active = 1;
     tinygl_draw_point(special->pos, 1);
 }
 
@@ -220,6 +221,8 @@ void turnon_specials (special_t* special)
 void turnoff_specials (special_t* special) 
 {
     tinygl_draw_point(special->pos, 0);
+	special->pos.x = -1;
+	special->pos.y = -1;
 }
  
 /* turns off the specials leds, shuffles their positions 
@@ -246,14 +249,22 @@ void shuffle_specials (special_t* specials)
  * @param players: the list of players
  * @param specials: the list of specials
  * @param collision: the index of the collided with special
- 
+ */
 void apply_special (player_t* players, special_t* specials, uint8_t collision)
 {
 
     if (specials[collision].special == SPEED_UP) {
-        players[PLAYER].speed = UP_SPEED;
+		if (players[0].speed -= 50 >= 50) {
+			players[0].speed -= 50;
+		} else {
+			players[0].speed = 50;
+		}
     } else {
-        players[PLAYER].speed = DOWN_SPEED;
+		if (players[0].speed += 50 <= 1000) {
+			players[0].speed += 50;
+		} else {
+			players[0].speed = 1000;
+		}
     }
 
 }
@@ -264,21 +275,21 @@ void apply_special (player_t* players, special_t* specials, uint8_t collision)
  * @param the list of current players
  * @param the list of specials
  * @return the index of the special that has been collided with or -1
- 
+ */
 uint8_t collision_special (player_t* players, special_t* specials)
 {
     uint8_t i;
     
     for (i = 0; i < NUM_SPECIALS; i++) {
-        if (((players[PLAYER].pos.x == specials[i].pos.x) && (players[PLAYER].pos.y == specials[i].pos.y)) && specials[i].is_active) {
+        if (((players[0].pos.x == specials[i].pos.x) && (players[0].pos.y == specials[i].pos.y)) && specials[i].is_active) {
             specials[i].is_active = 0;
             turnoff_specials(&specials[i]);
             return i;
         }
     }
-    return -1;
+    return 100;
 }  
-*/
+
 
 
 void update_game(char* received, player_t* players, Direction* move, uint8_t* other_player)
@@ -344,6 +355,7 @@ int main (void)
     
 
     uint8_t counter = 0;
+	uint8_t collected = 100;
     uint16_t s_counter = 0;
     uint16_t s_timeout = 0;
     bool s1_state = 1;
@@ -370,7 +382,7 @@ int main (void)
         get_move(&players[0].current_direction);
 
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
-        if (counter == 200) {
+        if (counter == players[0].speed) {
             counter = 0;
             tinygl_draw_point(players[0].pos, 0);
             move_player(players, &players[0].current_direction, &PLAYER);
@@ -379,13 +391,13 @@ int main (void)
         }
         
         
-        if (s_counter == 500) {
+        if (s_counter % 500 == 0 && specials[1].is_active == 1) {
             s_counter = 0;
             tinygl_draw_point(specials[1].pos, !s1_state);
             s1_state = !s1_state;
         }
         
-        if (s_counter % 250 == 0) {
+        if (s_counter % 250 == 0 && specials[0].is_active == 1) {
             tinygl_draw_point(specials[0].pos, !s2_state);
             s2_state = !s2_state;
         }
@@ -398,6 +410,12 @@ int main (void)
         if (player_caught(players)) {
             swap(players);
         }
+		
+		collected = collision_special(players, specials);
+		if (collected != 100) {
+			apply_special(players, specials, collected);
+			collected = 100;
+		}
         
         counter++;
         s_counter++; 
