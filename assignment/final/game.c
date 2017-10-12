@@ -165,13 +165,13 @@ void swap (player_t* players)
         players[0].is_runner = 0;
         players[1].is_runner = 1;
         //**TODO**//
-        //Put code to transmit the swapped roles
+        led_set(LED1, 0);
             
     } else {
         players[0].is_runner = 1;
         players[1].is_runner = 0;
         //**TODO**//
-            led_set(LED1, 0);
+        led_set(LED1, 1);
     }
 }
 
@@ -250,20 +250,20 @@ void shuffle_specials (special_t* specials)
  * @param specials: the list of specials
  * @param collision: the index of the collided with special
  */
-void apply_special (player_t* players, special_t* specials, uint8_t collision)
+void apply_special (player_t* player, special_t* specials, uint8_t collision)
 {
 
     if (specials[collision].special == SPEED_UP) {
-		if (players[0].speed -= 50 >= 50) {
-			players[0].speed -= 50;
+		if (player->speed -= 50 >= 50) {
+			players->speed -= 50;
 		} else {
-			players[0].speed = 50;
+			players->speed = 50;
 		}
     } else {
-		if (players[0].speed += 50 <= 1000) {
-			players[0].speed += 50;
+		if (players->speed += 50 <= 350) {
+			players->speed += 50;
 		} else {
-			players[0].speed = 1000;
+			players->speed = 1000;
 		}
     }
 
@@ -344,8 +344,8 @@ int main (void)
     navswitch_init();
     
     pacer_init(1000);
-    uint8_t PLAYER = 0; // set player for this unit will be according to who is host unit
-    uint8_t other_player = 1;
+    static uint8_t player = 0; // set player for this unit will be according to who is host unit
+    static uint8_t other_player = !player;
     
     create_players (players, PLAYER);
     
@@ -356,6 +356,7 @@ int main (void)
 
     uint8_t counter = 0;
 	uint8_t collected = 100;
+	uint8_t catch_timeout = 0;
     uint16_t s_counter = 0;
     uint16_t s_timeout = 0;
     bool s1_state = 1;
@@ -364,8 +365,8 @@ int main (void)
     while (1)
     {
         pacer_wait();
-        tinygl_draw_point(players[0].pos, 1);
-        tinygl_draw_point(players[1].pos, 1);
+        tinygl_draw_point(players[player].pos, 1);
+        tinygl_draw_point(players[!player].pos, 1);
         tinygl_update();
           //**TODO**//
           //Sets up scheduled tasks
@@ -379,14 +380,14 @@ int main (void)
         // (rate of runner/chaser update will depend on active specials)
         // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
-        get_move(&players[0].current_direction);
+        get_move(&players[player].current_direction);
 
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
-        if (counter == players[0].speed) {
+        if (counter == players[player].speed) {
             counter = 0;
-            tinygl_draw_point(players[0].pos, 0);
-            move_player(players, &players[0].current_direction, &PLAYER);
-            tinygl_draw_point(players[0].pos, 1);
+            tinygl_draw_point(players[player].pos, 0);
+            move_player(players, &players[player].current_direction, &PLAYER);
+            tinygl_draw_point(players[player].pos, 1);
             tinygl_update();
         }
         
@@ -407,7 +408,8 @@ int main (void)
             shuffle_specials(specials);
         }
         
-        if (player_caught(players)) {
+        if (player_caught(players) && catch_timeout > 10) {
+			catch_timeout = 0;
             swap(players);
         }
 		
@@ -417,6 +419,9 @@ int main (void)
 			collected = 100;
 		}
         
+		if (catch_timeout < 255) {
+			catch_timeout++;
+		}
         counter++;
         s_counter++; 
         s_timeout++;
