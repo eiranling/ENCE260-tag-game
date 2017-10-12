@@ -189,17 +189,6 @@ int main (void)
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[!player].pos, 1);
         tinygl_update();
-          //**TODO**//
-          //Sets up scheduled tasks
-        //task_t tasks[] = {
-        //  {.func = get_move(&current_direction), .period = TASK_RATE / NAVSWITCH_TASK_RATE, .data = },
-        //  {.func = update_player_pos(players, &current_direction), .period / DISPLAY_TASK_RATE}
-        //}
-        // set up a task scheduler to poll navswitch, 
-        // place specials, IR polling,
-        // update location of runner, update location of chaser.
-        // (rate of runner/chaser update will depend on active specials)
-        // turn off special effects after 8 seconds. (i.e .speed = STANDARD_SPEED;)
         
         get_move(&players[player].current_direction);
         
