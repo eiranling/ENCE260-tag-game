@@ -63,10 +63,9 @@ void update_game(char* received, player_t* players, Direction* move, uint8_t* ot
             
 }
 
-char receive_IR (char* input, player_t* players, Direction* move, uint8_t* other_player) 
+char receive_IR (player_t* players) 
 {
     char received;
-    uint8_t i;
     if (ir_uart_read_ready_p()) {
         received = ir_uart_getc();
         return received;
@@ -77,7 +76,7 @@ char receive_IR (char* input, player_t* players, Direction* move, uint8_t* other
 }
 
 void transmit_IR (Direction* dir) {
-    char direction;
+    char direction = '0';
     if (ir_uart_write_ready_p()) {
 
         if (*dir == NORTH) {
@@ -133,8 +132,6 @@ int main (void)
         if (navswitch_push_event_p (NAVSWITCH_SOUTH))
             character = '2';
 
-        /* TODO: Transmit the character over IR on a NAVSWITCH_PUSH
-           event.  */
         if (navswitch_push_event_p (NAVSWITCH_PUSH) && ir_uart_write_ready_p()) {
             ir_uart_putc(character);
             if (character == '1') { // indicates this FK is a host, thus set this one to a host
@@ -171,12 +168,11 @@ int main (void)
     
     led_init();
     led_set(LED1, 0);
-    
 
     uint16_t counter = 0;
     uint16_t p2_counter = 0;
 	uint8_t collected = 100;
-	uint8_t catch_timeout = 0;
+	uint16_t catch_timeout = 3000;
     uint16_t s_counter = 0;
     uint16_t s_timeout = 0;
     bool s1_state = 1;
@@ -185,15 +181,16 @@ int main (void)
     
     while (1)
     {
+        
         pacer_wait();
         tinygl_draw_point(players[player].pos, 1);
-        tinygl_draw_point(players[!player].pos, 1);
+        tinygl_draw_point(players[other_player].pos, 1);
         tinygl_update();
         
         get_move(&players[player].current_direction);
         
     
-        move_inst = receive_IR(input, players, &players[other_player].current_direction, &other_player);
+        move_inst = receive_IR(players);
         if (move_inst == 'N') {
             players[other_player].current_direction = NORTH;
         } else if (move_inst == 'E') {
@@ -204,7 +201,7 @@ int main (void)
             players[other_player].current_direction = SOUTH;
         }
         
-
+        
         //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
         if (counter == players[player].speed) {
             counter = 0;
@@ -239,21 +236,30 @@ int main (void)
             s_timeout = 0;
             shuffle_specials(specials);
         }
-        
-        if (player_caught(players) && catch_timeout > 10) {
-			catch_timeout = 0;
-            swap(players);
-        }
 		
-		collected = collision_special(players, specials);
+        
+		collected = collision_special(players, specials, player);
 		if (collected != 100) {
-			apply_special(players, specials, collected);
+			apply_special(&players[player], specials, collected);
 			collected = 100;
 		}
         
-		if (catch_timeout < 255) {
-			catch_timeout++;
+		collected = collision_special(players, specials, other_player);
+		if (collected != 100) {
+			apply_special(&players[other_player], specials, collected);
+			collected = 100;
 		}
+        
+        if (player_caught(players) && catch_timeout >= players[player].speed*1.5) {
+            catch_timeout = 0;
+            swap(players);
+            players[player].speed = STANDARD_SPEED;
+            players[player].speed = STANDARD_SPEED;
+        }
+        
+        if (catch_timeout < 3000) {
+            catch_timeout++;
+        }
         
         tinygl_draw_point(players[other_player].pos, 0);
         tinygl_draw_point(players[other_player].pos, 1);
@@ -262,6 +268,8 @@ int main (void)
         p2_counter++;
         s_counter++; 
         s_timeout++;
+        
+        
     }
 }
 

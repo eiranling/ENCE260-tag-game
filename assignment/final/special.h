@@ -20,7 +20,7 @@ void turnoff_specials (special_t* special);
 
 void shuffle_specials (special_t* specials);
 
-uint8_t collision_special (player_t* players, special_t* specials);
+uint8_t collision_special (player_t* players, special_t* specials, uint8_t player);
 
 void apply_special (player_t* player, special_t* specials, uint8_t collision);
 
