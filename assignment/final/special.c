@@ -72,13 +72,13 @@ void apply_special (player_t* player, special_t* specials, uint8_t collision)
 {
 
     if (specials[collision].special == SPEED_UP) {
-		if (player->speed -= 50 >= 50) {
+		if (player->speed - 50 >= 50) {
 			player->speed -= 50;
 		} else {
 			player->speed = 50;
 		}
     } else {
-		if (player->speed += 50 <= 350) {
+		if (player->speed + 50 <= 350) {
 			player->speed += 50;
 		} else {
 			player->speed = 1000;

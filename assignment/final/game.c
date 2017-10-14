@@ -185,9 +185,9 @@ int main (void)
         pacer_wait();
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
-        tinygl_update();
         
         get_move(&players[player].current_direction);
+		tinygl_update();
         
     
         move_inst = receive_IR(players);
@@ -263,6 +263,7 @@ int main (void)
         
         tinygl_draw_point(players[other_player].pos, 0);
         tinygl_draw_point(players[other_player].pos, 1);
+		tinygl_update();
         
         counter++;
         p2_counter++;
