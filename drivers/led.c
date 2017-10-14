@@ -9,7 +9,7 @@
 #include "led.h"
 
 
-typedef struct 
+typedef struct
 {
     pio_t pio;
     /* True for active high, false for active low.  */
