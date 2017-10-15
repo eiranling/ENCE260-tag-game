@@ -185,7 +185,6 @@ int main (void)
         pacer_wait();
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
-        tinygl_update();
         
         get_move(&players[player].current_direction);
         
@@ -202,7 +201,7 @@ int main (void)
         }
         
         
-        //    tinygl_draw_point (players[PLAYER].pos, 0); // temp turn off point to stop ghosting
+        // updates the player position
         if (counter == players[player].speed) {
             counter = 0;
             transmit_IR(&players[player].current_direction);
@@ -212,6 +211,7 @@ int main (void)
             tinygl_update();
         }
         
+        // updates the second player's position
         if (p2_counter == players[other_player].speed) {
             p2_counter = 0;
             tinygl_draw_point(players[other_player].pos, 0);
@@ -220,24 +220,26 @@ int main (void)
             tinygl_update();
         }
         
-        
+        // cause the first powerup to blink slowly
         if (s_counter % 500 == 0 && specials[1].is_active == 1) {
             s_counter = 0;
             tinygl_draw_point(specials[1].pos, !s1_state);
             s1_state = !s1_state;
         }
         
+        // cause the second powerup to blink faster
         if (s_counter % 250 == 0 && specials[0].is_active == 1) {
             tinygl_draw_point(specials[0].pos, !s2_state);
             s2_state = !s2_state;
         }
         
+        // creates a timeout for the powerups, shuffles every 20 seconds.
         if (s_timeout == 20000) {
             s_timeout = 0;
             shuffle_specials(specials);
         }
 		
-        
+        // code to detect when a powerup has been picked up.
 		collected = collision_special(players, specials, player);
 		if (collected != 100) {
 			apply_special(&players[player], specials, collected);
@@ -250,6 +252,7 @@ int main (void)
 			collected = 100;
 		}
         
+        // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.
         if (player_caught(players) && catch_timeout >= players[player].speed*1.5) {
             catch_timeout = 0;
             swap(players);
@@ -261,6 +264,7 @@ int main (void)
             catch_timeout++;
         }
         
+        // refresh the other player.
         tinygl_draw_point(players[other_player].pos, 0);
         tinygl_draw_point(players[other_player].pos, 1);
         
@@ -268,8 +272,6 @@ int main (void)
         p2_counter++;
         s_counter++; 
         s_timeout++;
-        
-        
     }
 }
 
