@@ -63,16 +63,12 @@ void update_game(char* received, player_t* players, Direction* move, uint8_t* ot
             
 }
 
-char receive_IR (void) 
+void receive_IR (char* recv) 
 {
-    char received;
-    if (ir_uart_read_ready_p()) {
-        received = ir_uart_getc();
-        return received;
-
-    } else {
-        return '0';
-    }
+	if (ir_uart_read_ready_p()) {
+		*recv = ir_uart_getc();
+	}
+		\
 }
 
 void transmit_IR_dir (Direction* dir) {
@@ -81,6 +77,7 @@ void transmit_IR_dir (Direction* dir) {
 
         if (*dir == NORTH) {
             direction = 'N';
+			
         } else if (*dir == EAST) {
             direction = 'E';
         } else if (*dir == WEST) {
@@ -93,11 +90,11 @@ void transmit_IR_dir (Direction* dir) {
 }
 
 void transmit_end(void) {
-    ir_uart_putc('X');
+    ir_uart_putc_nocheck('X');
 }
 
 void transmit_start(void) {
-    ir_uart_putc('A');
+	ir_uart_putc_nocheck('A');
 }
 
 void display_character (char character)
@@ -129,6 +126,7 @@ int main (void)
     
     pacer_init(1000);
     
+	create_specials (specials);
     char character = '1';
     while (!slave && !host) {
         tinygl_update ();
@@ -149,7 +147,7 @@ int main (void)
                 slave = 1;
             }
         }
-        if (!slave || !host) {
+        if (!slave && !host) {
             if (ir_uart_read_ready_p()) {
                 character = ir_uart_getc();
                 if (character == '1') { // indicates the other fun kit is a host, thus set this one to a slave
@@ -164,6 +162,7 @@ int main (void)
         display_character(character);
     }
     tinygl_clear();
+	
     if (host) {
         player = 0;
         other_player = 1;
@@ -171,11 +170,11 @@ int main (void)
         player = 1;
         other_player = 0;
     }
+	led_init();
+	led_set(LED1, 0);
     create_players (players, player);
-    create_specials (specials);
     
-    led_init();
-    led_set(LED1, 0);
+	//led_set(LED1, 1);
 
     uint16_t counter = 0;
     uint16_t p2_counter = 0;
@@ -185,15 +184,28 @@ int main (void)
     uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
     uint16_t game_time = 0;
     uint16_t seconds_counter = 0;
+	bool caught = 0;
     bool s1_state = 1;
     bool s2_state = 1;
     char recv_char;
     
-    do {
-        transmit_start();
-        recv_char = receive_IR();
-    } while (recv_char != 'A');
-    
+	if (ir_uart_read_ready_p()) {
+		do {
+			//led_set(LED1, 1);
+			receive_IR(&recv_char);
+		} while (recv_char != 'A');
+	} else {
+		transmit_start();
+	}
+	
+	while (recv_char != 'A') {
+		receive_IR(&recv_char);
+	}
+	
+	transmit_start();
+	
+
+	
     while (game_time <= TIME_LIMIT) // game runs for a minute.
     {
         
@@ -201,11 +213,11 @@ int main (void)
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
         
-        get_move(&players[player].current_direction);
+        
 		tinygl_update();
         
-    
-        recv_char = receive_IR();
+		
+        receive_IR(&recv_char);
         if (recv_char == 'N') {
             players[other_player].current_direction = NORTH;
         } else if (recv_char == 'E') {
@@ -221,11 +233,14 @@ int main (void)
             }
         }
             
-        
+			
+		
+		
         // updates the player position
         if (counter == players[player].speed) {
             counter = 0;
-            transmit_IR_dir(&players[player].current_direction);
+			get_move(&players[player].current_direction);
+			transmit_IR_dir(&players[player].current_direction);
             tinygl_draw_point(players[player].pos, 0);
             move_player(players, &players[player].current_direction, &player);
             tinygl_draw_point(players[player].pos, 1);
@@ -272,14 +287,26 @@ int main (void)
 			apply_special(&players[other_player], specials, collected);
 			collected = 100;
 		}
+		
+		if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+			if (!players[player].is_runner) {
+				led_set(LED1, 0);
+			} else {
+				led_set(LED1, 1);
+			}
+		}
         
         // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.
-        if (player_caught(players) && catch_timeout >= players[player].speed*1.5) {
-            catch_timeout = 0;
+        if (player_caught(players) && !caught) {
+            caught = 1;
             swap(players);
             players[player].speed = STANDARD_SPEED;
             players[other_player].speed = STANDARD_SPEED;
         }
+		
+		if (!player_caught(players)) {
+			caught = 0;
+		}
         
         if (catch_timeout < 3000) {
             catch_timeout++;
@@ -300,11 +327,16 @@ int main (void)
     if (host) {
         transmit_end();
     }
+	tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
+	tinygl_text_speed_set(1);
     
     while (1) {
-        
-        display_character('E');
-        tinygl_update();
+        if (players[player].is_runner) {
+			tinygl_text("YOU LOSE");
+		} else {
+			tinygl_text("YOU WIN");
+		}
+		tinygl_update();
     }
 }
 
