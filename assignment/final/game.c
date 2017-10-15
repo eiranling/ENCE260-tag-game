@@ -13,7 +13,7 @@
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
 #define NUM_IR_CODES 7 //total number of IR codes
-#define TIME_LIMIT 60000 // 1 min in miliseconds
+#define TIME_LIMIT 60 // 1 min in seconds
 #define STANDARD_SPEED 200// set standard speed
 #define UP_SPEED  100// set power up speed
 #define DOWN_SPEED  300//set power down speed
@@ -63,7 +63,7 @@ void update_game(char* received, player_t* players, Direction* move, uint8_t* ot
             
 }
 
-char receive_IR (player_t* players) 
+char receive_IR (void) 
 {
     char received;
     if (ir_uart_read_ready_p()) {
@@ -75,7 +75,7 @@ char receive_IR (player_t* players)
     }
 }
 
-void transmit_IR (Direction* dir) {
+void transmit_IR_dir (Direction* dir) {
     char direction = '0';
     if (ir_uart_write_ready_p()) {
 
@@ -90,6 +90,14 @@ void transmit_IR (Direction* dir) {
         }
         ir_uart_putc(direction);
     }
+}
+
+void transmit_end(void) {
+    ir_uart_putc('X');
+}
+
+void transmit_start(void) {
+    ir_uart_putc('A');
 }
 
 void display_character (char character)
@@ -174,12 +182,19 @@ int main (void)
 	uint8_t collected = 100;
 	uint16_t catch_timeout = 3000;
     uint16_t s_counter = 0;
-    uint16_t s_timeout = 0;
+    uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
+    uint16_t game_time = 0;
+    uint16_t seconds_counter = 0;
     bool s1_state = 1;
     bool s2_state = 1;
-    char move_inst;
+    char recv_char;
     
-    while (1)
+    do {
+        transmit_start();
+        recv_char = receive_IR();
+    } while (recv_char != 'A');
+    
+    while (game_time <= TIME_LIMIT) // game runs for a minute.
     {
         
         pacer_wait();
@@ -190,22 +205,27 @@ int main (void)
 		tinygl_update();
         
     
-        move_inst = receive_IR(players);
-        if (move_inst == 'N') {
+        recv_char = receive_IR();
+        if (recv_char == 'N') {
             players[other_player].current_direction = NORTH;
-        } else if (move_inst == 'E') {
+        } else if (recv_char == 'E') {
             players[other_player].current_direction = EAST;
-        } else if (move_inst == 'W') {
+        } else if (recv_char == 'W') {
             players[other_player].current_direction = WEST;
-        } else if (move_inst == 'S') {
+        } else if (recv_char == 'S') {
             players[other_player].current_direction = SOUTH;
         }
-        
+        if (slave) {
+            if (recv_char == 'X') {
+                game_time = TIME_LIMIT;
+            }
+        }
+            
         
         // updates the player position
         if (counter == players[player].speed) {
             counter = 0;
-            transmit_IR(&players[player].current_direction);
+            transmit_IR_dir(&players[player].current_direction);
             tinygl_draw_point(players[player].pos, 0);
             move_player(players, &players[player].current_direction, &player);
             tinygl_draw_point(players[player].pos, 1);
@@ -258,22 +278,33 @@ int main (void)
             catch_timeout = 0;
             swap(players);
             players[player].speed = STANDARD_SPEED;
-            players[player].speed = STANDARD_SPEED;
+            players[other_player].speed = STANDARD_SPEED;
         }
         
         if (catch_timeout < 3000) {
             catch_timeout++;
         }
         
-        // refresh the other player.
-        tinygl_draw_point(players[other_player].pos, 0);
-        tinygl_draw_point(players[other_player].pos, 1);
-		tinygl_update();
+        if (seconds_counter == 1000) {
+            seconds_counter = 0;
+            game_time++;
+        }
         
         counter++;
         p2_counter++;
         s_counter++; 
         s_timeout++;
+        seconds_counter++;
+    }
+    
+    if (host) {
+        transmit_end();
+    }
+    
+    while (1) {
+        
+        display_character('E');
+        tinygl_update();
     }
 }
 

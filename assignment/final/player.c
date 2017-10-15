@@ -102,7 +102,7 @@ void create_players (player_t* players, uint8_t PLAYER)
         runner = !runner; //make sure only one chaser
         
         tinygl_draw_point (players[i].pos, 1); // 1 for on
-        if (i == PLAYER && players[PLAYER].is_runner == 1) {
+        if (players[PLAYER].is_runner == 1) {
             led_set(LED1, 1);
         } else {
             led_set(LED1, 0);
