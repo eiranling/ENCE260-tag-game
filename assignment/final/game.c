@@ -286,12 +286,16 @@ int main (void)
             collected = 100;
         }
         
-        if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-            if (!players[player].is_runner) {
-                led_set(LED1, 0);
-            } else {
-                led_set(LED1, 1);
-            }
+        collected = collision_special(players, specials, other_player);
+        if (collected != 100) {
+            apply_special(&players[other_player], specials, collected);
+            collected = 100;
+        }
+        
+        if (!players[player].is_runner) {
+            led_set(LED1, 0);
+        } else {
+            led_set(LED1, 1);
         }
         
         // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.
@@ -325,15 +329,18 @@ int main (void)
     if (host) {
         transmit_end();
     }
-    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text_speed_set(1);
     
+    if (players[player].is_runner) {
+        tinygl_text("YOU LOSE");
+    } else {
+        tinygl_text("YOU WIN");
+    }
+    
+    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
+    tinygl_text_speed_set(10);
+    pacer_init(150);
     while (1) {
-        if (players[player].is_runner) {
-            tinygl_text("YOU LOSE");
-        } else {
-            tinygl_text("YOU WIN");
-        }
+        pacer_wait();
         tinygl_update();
     }
 }
