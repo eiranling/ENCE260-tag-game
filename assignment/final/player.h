@@ -8,6 +8,9 @@
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
+static uint8_t player; // set player for this unit will be according to who is host unit
+static uint8_t other_player;
+
 typedef struct player_struct
 {
     tinygl_point_t pos;
@@ -15,9 +18,6 @@ typedef struct player_struct
     uint16_t speed;
     Direction current_direction;
 } player_t;
-
-//static uint8_t player = 0; // set player for this unit will be according to who is host unit
-//static uint8_t other_player = 1;
 
 /* Checks to see if the players have ended up at the same co-ords
  * this will indicate if the runner has been caught by the chaser

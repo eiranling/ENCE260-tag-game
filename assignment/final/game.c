@@ -85,11 +85,11 @@ void transmit_IR_dir (Direction* dir) {
 }
 
 void transmit_end(void) {
-    ir_uart_putc_nocheck('X');
+    ir_uart_putc('X');
 }
 
 void transmit_start(void) {
-    ir_uart_putc_nocheck('A');
+    ir_uart_putc('A');
 }
 
 void display_character (char character)
@@ -199,7 +199,6 @@ int main (void)
     
     while (game_time <= TIME_LIMIT) // game runs for a minute.
     {
-        
         pacer_wait();
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
@@ -255,7 +254,8 @@ int main (void)
         }
         
         // creates a timeout for the powerups, shuffles every 15 seconds.
-        if (game_time % 15) {
+        if (s_timeout == 20000) {
+            s_timeout = 0;
             shuffle_specials(specials);
         }
 		
