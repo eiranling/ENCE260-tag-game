@@ -75,7 +75,7 @@ void apply_special (player_t* player, special_t* specials, uint8_t collision)
             if (player->speed - CHANGE_SPEED >= MAX_SPEED) {
             player->speed -= CHANGE_SPEED;
         } else {
-            player->speed = CHANGE_SPEED;
+            player->speed = MAX_SPEED;
         }
     } else {
         if (player->speed + CHANGE_SPEED <= MIN_SPEED) {
