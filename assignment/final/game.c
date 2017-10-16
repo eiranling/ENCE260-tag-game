@@ -19,7 +19,7 @@
 /* Define polling rates in Hz  */
 #define NAVSWITCH_TASK_RATE 144 //Poll the NAVSWITCH at 1000 Hz
 
-#define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
+#define DISPLAY_TASK_RATE 1000 // Update the display at 144Hz to reduce flickering.
 
 /* Polls the navswitch and sets the direction for the player
  * to move in
@@ -116,44 +116,35 @@ int main (void)
 
     tinygl_init (DISPLAY_TASK_RATE);
     tinygl_font_set (&font5x7_1);
+	tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
+    tinygl_text_speed_set(10);
     navswitch_init();
     
     pacer_init(1000);
     
     create_specials (specials);
+	tinygl_text("Push button to start");
+	
     char character = '1';
     while (!slave && !host) {
+		pacer_wait();
         tinygl_update ();
         navswitch_update ();
-        
-        if (navswitch_push_event_p (NAVSWITCH_NORTH))
-            character = '1';
-
-        if (navswitch_push_event_p (NAVSWITCH_SOUTH))
-            character = '2';
 
         if (navswitch_push_event_p (NAVSWITCH_PUSH) && ir_uart_write_ready_p()) {
             ir_uart_putc(character);
             if (character == '1') { // indicates this FK is a host, thus set this one to a host
                 host = 1; 
-            }
-            if (character == '2') {
-                slave = 1;
-            }
-        }
+			}
+		}
         if (!slave && !host) {
             if (ir_uart_read_ready_p()) {
                 character = ir_uart_getc();
                 if (character == '1') { // indicates the other fun kit is a host, thus set this one to a slave
                     slave = 1; 
                 }
-                if (character == '2') {
-                    host = 1;
-                }
             }
         }
-        
-        display_character(character);
     }
     tinygl_clear();
     
@@ -181,20 +172,6 @@ int main (void)
     bool s1_state = 1;
     bool s2_state = 1;
     char recv_char;
-    
-    if (ir_uart_read_ready_p()) {
-        do {
-            receive_IR(&recv_char);
-        } while (recv_char != 'A');
-    } else {
-        transmit_start();
-    }
-    
-    while (recv_char != 'A') {
-        receive_IR(&recv_char);
-    }
-    
-    transmit_start();
     
     while (game_time <= TIME_LIMIT) // game runs for a minute.
     {
@@ -276,6 +253,11 @@ int main (void)
             swap(players);
             players[player].speed = STANDARD_SPEED;
             players[other_player].speed = STANDARD_SPEED;
+			if (players[player].is_runner) {
+				led_set(LED1, 1);
+			} else {
+				led_set(LED1, 0);
+			}
         }
         
         // Only resets the caught flag when the players are apart.
@@ -293,6 +275,26 @@ int main (void)
             seconds_counter = 0;
             game_time++;
         }
+		
+		/*
+		if (seconds_counter % 200 == 0) {
+			if (host) {
+				if (players[player].is_runner) {
+					ir_uart_putc('0');
+				} else {
+					ir_uart_putc('1');
+				}
+			} else {
+				receive_IR(&recv_char);
+				if (recv_char == '0') {
+					players[other_player].is_runner = 1;
+					players[player].is_runner = 0;
+				} else if (recv_char == '1') {
+					players[player].is_runner = 0;
+					players[other_player].is_runner = 1;
+				}
+			}
+		}*/
         
         counter++;
         p2_counter++;
@@ -311,9 +313,7 @@ int main (void)
         tinygl_text("YOU WIN");
     }
     
-    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text_speed_set(10);
-    pacer_init(150);
+    pacer_init(1000);
     while (1) {
         pacer_wait();
         tinygl_update();

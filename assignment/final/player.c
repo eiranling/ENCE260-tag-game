@@ -83,10 +83,12 @@ void create_players (player_t* players, uint8_t PLAYER)
         uint8_t x;
         uint8_t y;
         
-        do { //randomly draw co-ords within our matrix
-            x = rand () % TINYGL_WIDTH;
-            y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && ((x == players[0].pos.x) && y == players[0].pos.y)); //make sure both players start in different spaces.
+        x = TINYGL_WIDTH * i;
+        y = TINYGL_HEIGHT * i;
+		if (x == TINYGL_WIDTH || y == TINYGL_HEIGHT) {
+			x--;
+			y--;
+		}
     
         players[i].pos.x = x;
         players[i].pos.y = y;
