@@ -14,8 +14,7 @@
 #define NUM_SPECIALS 2 //max specials
 #define NUM_IR_CODES 7 //total number of IR codes
 #define TIME_LIMIT 60 // 1 min in seconds
-#define UP_SPEED  100// set power up speed
-#define DOWN_SPEED  300//set power down speed
+#define STANDARD_SPEED 200// set standard speed
 
 /* Define polling rates in Hz  */
 #define NAVSWITCH_TASK_RATE 144 //Poll the NAVSWITCH at 1000 Hz
@@ -67,13 +66,13 @@ void receive_IR (char* recv)
 	}
 }
 
+
 void transmit_IR_dir (Direction* dir) {
     char direction = '0';
     if (ir_uart_write_ready_p()) {
 
         if (*dir == NORTH) {
             direction = 'N';
-			
         } else if (*dir == EAST) {
             direction = 'E';
         } else if (*dir == WEST) {
@@ -90,7 +89,7 @@ void transmit_end(void) {
 }
 
 void transmit_start(void) {
-	ir_uart_putc_nocheck('A');
+    ir_uart_putc_nocheck('A');
 }
 
 void display_character (char character)
@@ -122,7 +121,7 @@ int main (void)
     
     pacer_init(1000);
     
-	create_specials (specials);
+    create_specials (specials);
     char character = '1';
     while (!slave && !host) {
         tinygl_update ();
@@ -158,7 +157,7 @@ int main (void)
         display_character(character);
     }
     tinygl_clear();
-	
+    
     if (host) {
         player = 0;
         other_player = 1;
@@ -166,8 +165,8 @@ int main (void)
         player = 1;
         other_player = 0;
     }
-	led_init();
-	led_set(LED1, 0);
+    led_init();
+    led_set(LED1, 0);
     create_players (players, player);
 
     uint16_t counter = 0;
@@ -178,7 +177,7 @@ int main (void)
     uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
     uint16_t game_time = 0;
     uint16_t seconds_counter = 0;
-	bool caught = 0;
+    bool caught = 0;
     bool s1_state = 1;
     bool s2_state = 1;
     char recv_char;
@@ -196,9 +195,8 @@ int main (void)
 	}
 	
 	transmit_start();
-	
 
-	
+    
     while (game_time <= TIME_LIMIT) // game runs for a minute.
     {
         
@@ -206,7 +204,7 @@ int main (void)
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
 		tinygl_update();
-		
+
         receive_IR(&recv_char);
         if (recv_char == 'N') {
             players[other_player].current_direction = NORTH;
@@ -226,8 +224,8 @@ int main (void)
         // updates the player position
         if (counter == players[player].speed) {
             counter = 0;
-			get_move(&players[player].current_direction);
-			transmit_IR_dir(&players[player].current_direction);
+            get_move(&players[player].current_direction);
+            transmit_IR_dir(&players[player].current_direction);
             tinygl_draw_point(players[player].pos, 0);
             move_player(players, &players[player].current_direction, &player);
             tinygl_draw_point(players[player].pos, 1);
@@ -315,17 +313,17 @@ int main (void)
     }
     
     if (players[player].is_runner) {
-		tinygl_text("YOU LOSE");
+        tinygl_text("YOU LOSE");
     } else {
         tinygl_text("YOU WIN");
     }
     
-	tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-	tinygl_text_speed_set(10);
+    tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
+    tinygl_text_speed_set(10);
     pacer_init(150);
     while (1) {
         pacer_wait();
-		tinygl_update();
+        tinygl_update();
     }
 }
 

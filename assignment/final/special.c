@@ -2,15 +2,14 @@
 #include "special.h"
 #include "tinygl.h"
 
-#define NUM_SPECIALS 2
+
 
 /* Turns on the LED relating to the pos of the special
- * sets the flash rate of the special according to its Special enum value
  * @param the special that needs turning on.
  */
 void turnon_specials (special_t* special) 
-{	
-	special->is_active = 1;
+{   
+    special->is_active = 1;
     tinygl_draw_point(special->pos, 1);
 }
 
@@ -20,8 +19,8 @@ void turnon_specials (special_t* special)
 void turnoff_specials (special_t* special) 
 {
     tinygl_draw_point(special->pos, 0);
-	special->pos.x = -1;
-	special->pos.y = -1;
+    special->pos.x = -1;
+    special->pos.y = -1;
 }
 
 /* turns off the specials leds, shuffles their positions 
@@ -47,6 +46,7 @@ void shuffle_specials (special_t* specials)
  * turn off the led of the collided with special and return the index of that special.
  * @param the list of current players
  * @param the list of specials
+ * @param the index of the player whos position is to be checked with special
  * @return the index of the special that has been collided with or -1
  */
 int8_t collision_special (player_t* players, special_t* specials, uint8_t player)
@@ -64,7 +64,7 @@ int8_t collision_special (player_t* players, special_t* specials, uint8_t player
 }  
 
 /* Applies the speedup/slowdown special to the players speed
- * @param players: the list of players
+ * @param player: the player who's speed is to be altered
  * @param specials: the list of specials
  * @param collision: the index of the collided with special
  */
@@ -72,17 +72,17 @@ void apply_special (player_t* player, special_t* specials, uint8_t collision)
 {
 
     if (specials[collision].special == SPEED_UP) {
-		if (player->speed - 50 >= 50) {
-			player->speed -= 50;
-		} else {
-			player->speed = 50;
-		}
+            if (player->speed - CHANGE_SPEED >= MAX_SPEED) {
+            player->speed -= CHANGE_SPEED;
+        } else {
+            player->speed = CHANGE_SPEED;
+        }
     } else {
-		if (player->speed + 50 <= 350) {
-			player->speed += 50;
-		} else {
-			player->speed = 1000;
-		}
+        if (player->speed + CHANGE_SPEED <= MIN_SPEED) {
+            player->speed += CHANGE_SPEED;
+        } else {
+            player->speed = MIN_SPEED;
+        }
     }
 
 }
@@ -104,7 +104,7 @@ void create_specials (special_t* specials)
         do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && ((x == specials[0].pos.x) && y == specials[0].pos.y )); //make sure both specials appear in different spaces.
+        } while (i > 0 && ((x == specials[0].pos.x) && y == specials[0].pos.y)); //make sure both specials appear in different spaces.
         
         specials[i].pos.x = x;
         specials[i].pos.y = y;
