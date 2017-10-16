@@ -61,9 +61,9 @@ void update_game(char* received, player_t* players, Direction* move, uint8_t* ot
 
 void receive_IR (char* recv) 
 {
-	if (ir_uart_read_ready_p()) {
-		*recv = ir_uart_getc();
-	}
+    if (ir_uart_read_ready_p()) {
+        *recv = ir_uart_getc();
+    }
 }
 
 
@@ -171,8 +171,8 @@ int main (void)
 
     uint16_t counter = 0;
     uint16_t p2_counter = 0;
-	int8_t collected = -1;
-	uint16_t catch_timeout = 3000;
+    int8_t collected = -1;
+    uint16_t catch_timeout = 3000;
     uint16_t s_counter = 0;
     uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
     uint16_t game_time = 0;
@@ -182,19 +182,19 @@ int main (void)
     bool s2_state = 1;
     char recv_char;
     
-	if (ir_uart_read_ready_p()) {
-		do {
-			receive_IR(&recv_char);
-		} while (recv_char != 'A');
-	} else {
-		transmit_start();
-	}
-	
-	while (recv_char != 'A') {
-		receive_IR(&recv_char);
-	}
-	
-	transmit_start();
+    if (ir_uart_read_ready_p()) {
+        do {
+            receive_IR(&recv_char);
+        } while (recv_char != 'A');
+    } else {
+        transmit_start();
+    }
+    
+    while (recv_char != 'A') {
+        receive_IR(&recv_char);
+    }
+    
+    transmit_start();
 
     
     while (game_time <= TIME_LIMIT) // game runs for a minute.
@@ -202,7 +202,7 @@ int main (void)
         pacer_wait();
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
-		tinygl_update();
+        tinygl_update();
 
         receive_IR(&recv_char);
         if (recv_char == 'N') {
@@ -254,27 +254,27 @@ int main (void)
         }
         
         // creates a timeout for the powerups, shuffles every 15 seconds.
-        if (s_timeout == 20000) {
+        if (s_timeout == 15000) {
             s_timeout = 0;
             shuffle_specials(specials);
         }
-		
+        
         // code to detect and apply powerup when picked up by player 1
-		collected = collision_special(players, specials, player);
-		if (collected != -1) {
-			apply_special(&players[player], specials, collected);
-		}
+        collected = collision_special(players, specials, player);
+        if (collected != -1) {
+            apply_special(&players[player], specials, collected);
+        }
         
         // code to detect and apply power when picked up by player 2.
-		collected = collision_special(players, specials, other_player);
-		if (collected != -1) {
-			apply_special(&players[other_player], specials, collected);
-		}
-		
-		if (!players[player].is_runner) {
-			led_set(LED1, 0);
-		} else {
-			led_set(LED1, 1);
+        collected = collision_special(players, specials, other_player);
+        if (collected != -1) {
+            apply_special(&players[other_player], specials, collected);
+        }
+        
+        if (!players[player].is_runner) {
+            led_set(LED1, 0);
+        } else {
+            led_set(LED1, 1);
         }
         
         // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.
@@ -284,11 +284,11 @@ int main (void)
             players[player].speed = STANDARD_SPEED;
             players[other_player].speed = STANDARD_SPEED;
         }
-		
+        
         // Only resets the caught flag when the players are apart.
-		if (!player_caught(players)) {
-			caught = 0;
-		}
+        if (!player_caught(players)) {
+            caught = 0;
+        }
         
         // increment the counters
         if (catch_timeout < 3000) { // Stops incrementing past a point so that it won't reset to 0
