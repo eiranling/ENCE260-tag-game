@@ -3,14 +3,17 @@
 #include "tinygl.h"
 
 #define NUM_SPECIALS 2
+#define UP_SPEED  50// set power up speed
+#define DOWN_SPEED  50//set power down speed
+#define MAX_SPEED  350 
+#define MIN_SPEED 50
 
 /* Turns on the LED relating to the pos of the special
- * sets the flash rate of the special according to its Special enum value
  * @param the special that needs turning on.
  */
 void turnon_specials (special_t* special) 
-{	
-	special->is_active = 1;
+{   
+    special->is_active = 1;
     tinygl_draw_point(special->pos, 1);
 }
 
@@ -20,8 +23,8 @@ void turnon_specials (special_t* special)
 void turnoff_specials (special_t* special) 
 {
     tinygl_draw_point(special->pos, 0);
-	special->pos.x = -1;
-	special->pos.y = -1;
+    special->pos.x = -1;
+    special->pos.y = -1;
 }
 
 /* turns off the specials leds, shuffles their positions 
@@ -47,6 +50,7 @@ void shuffle_specials (special_t* specials)
  * turn off the led of the collided with special and return the index of that special.
  * @param the list of current players
  * @param the list of specials
+ * @param the index of the player whos position is to be checked with special
  * @return the index of the special that has been collided with or -1
  */
 uint8_t collision_special (player_t* players, special_t* specials, uint8_t player)
@@ -64,7 +68,7 @@ uint8_t collision_special (player_t* players, special_t* specials, uint8_t playe
 }  
 
 /* Applies the speedup/slowdown special to the players speed
- * @param players: the list of players
+ * @param player: the player who's speed is to be altered
  * @param specials: the list of specials
  * @param collision: the index of the collided with special
  */
@@ -72,17 +76,17 @@ void apply_special (player_t* player, special_t* specials, uint8_t collision)
 {
 
     if (specials[collision].special == SPEED_UP) {
-		if (player->speed - 50 >= 50) {
-			player->speed -= 50;
-		} else {
-			player->speed = 50;
-		}
+            if (player->speed - 50 >= 50) {
+            player->speed -= 50;
+        } else {
+            player->speed = 50;
+        }
     } else {
-		if (player->speed + 50 <= 350) {
-			player->speed += 50;
-		} else {
-			player->speed = 1000;
-		}
+        if (player->speed + 50 <= 350) {
+            player->speed += 50;
+        } else {
+            player->speed = 1000;
+        }
     }
 
 }

@@ -30,20 +30,18 @@ void swap (player_t* players)
     if (players[player].is_runner) {
         players[player].is_runner = 0;
         players[other_player].is_runner = 1;
-        //**TODO**//
         led_set(LED1, 0);
             
     } else {
         players[player].is_runner = 1;
         players[other_player].is_runner = 0;
-        //**TODO**//
         led_set(LED1, 1);
     }
 }
 
 /* moves the player of this machiene in the direction stated 
- * @param the direction to move in
  * @param the list of players
+ * @param the direction to move in
  * @param player the index of the player to be moved
 */
 void move_player (player_t* players, Direction* new, uint8_t* player)
@@ -77,7 +75,9 @@ void move_player (player_t* players, Direction* new, uint8_t* player)
 
 /* Creates both players and places them in random locations
  * on the matrix, ensuring they do not start in the same spot
+ * turns on the blue led on the runners side
  * @params the list of players to be populated
+ * @params the current player on this machiene
 */
 void create_players (player_t* players, uint8_t PLAYER) 
 {
@@ -101,7 +101,7 @@ void create_players (player_t* players, uint8_t PLAYER)
         
         runner = !runner; //make sure only one chaser
         
-        tinygl_draw_point (players[i].pos, 1); // 1 for on
+        tinygl_draw_point (players[i].pos, 1);
         if (players[PLAYER].is_runner == 1) {
             led_set(LED1, 1);
         } else {
