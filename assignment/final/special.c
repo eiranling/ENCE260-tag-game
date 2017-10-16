@@ -49,9 +49,9 @@ void shuffle_specials (special_t* specials)
  * @param the list of specials
  * @return the index of the special that has been collided with or -1
  */
-uint8_t collision_special (player_t* players, special_t* specials, uint8_t player)
+int8_t collision_special (player_t* players, special_t* specials, uint8_t player)
 {
-    uint8_t i;
+    int8_t i;
     
     for (i = 0; i < NUM_SPECIALS; i++) {
         if (((players[player].pos.x == specials[i].pos.x) && (players[player].pos.y == specials[i].pos.y)) && specials[i].is_active) {
@@ -60,7 +60,7 @@ uint8_t collision_special (player_t* players, special_t* specials, uint8_t playe
             return i;
         }
     }
-    return 100;
+    return -1;
 }  
 
 /* Applies the speedup/slowdown special to the players speed

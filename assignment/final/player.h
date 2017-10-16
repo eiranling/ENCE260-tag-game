@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 
+#define NUM_PLAYERS 2
+#define STANDARD_SPEED 200
+
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
 typedef struct player_struct
@@ -13,8 +16,8 @@ typedef struct player_struct
     Direction current_direction;
 } player_t;
 
-static uint8_t player = 0; // set player for this unit will be according to who is host unit
-static uint8_t other_player = 1;
+//static uint8_t player = 0; // set player for this unit will be according to who is host unit
+//static uint8_t other_player = 1;
 
 bool player_caught(player_t* players);
 

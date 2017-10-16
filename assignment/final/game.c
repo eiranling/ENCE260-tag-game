@@ -14,7 +14,6 @@
 #define NUM_SPECIALS 2 //max specials
 #define NUM_IR_CODES 7 //total number of IR codes
 #define TIME_LIMIT 60 // 1 min in seconds
-#define STANDARD_SPEED 200// set standard speed
 #define UP_SPEED  100// set power up speed
 #define DOWN_SPEED  300//set power down speed
 
@@ -22,8 +21,6 @@
 #define NAVSWITCH_TASK_RATE 144 //Poll the NAVSWITCH at 1000 Hz
 
 #define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
-
-char input[NUM_IR_CODES] = {'N', 'S', 'E', 'W', 'X', 'U', 'D'};
 
 /* Polls the navswitch and sets the direction for the player
  * to move in
@@ -68,7 +65,6 @@ void receive_IR (char* recv)
 	if (ir_uart_read_ready_p()) {
 		*recv = ir_uart_getc();
 	}
-		\
 }
 
 void transmit_IR_dir (Direction* dir) {
@@ -173,12 +169,10 @@ int main (void)
 	led_init();
 	led_set(LED1, 0);
     create_players (players, player);
-    
-	//led_set(LED1, 1);
 
     uint16_t counter = 0;
     uint16_t p2_counter = 0;
-	uint8_t collected = 100;
+	int8_t collected = -1;
 	uint16_t catch_timeout = 3000;
     uint16_t s_counter = 0;
     uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
@@ -191,7 +185,6 @@ int main (void)
     
 	if (ir_uart_read_ready_p()) {
 		do {
-			//led_set(LED1, 1);
 			receive_IR(&recv_char);
 		} while (recv_char != 'A');
 	} else {
@@ -212,10 +205,7 @@ int main (void)
         pacer_wait();
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
-        
-        
 		tinygl_update();
-        
 		
         receive_IR(&recv_char);
         if (recv_char == 'N') {
@@ -233,9 +223,6 @@ int main (void)
             }
         }
             
-			
-		
-		
         // updates the player position
         if (counter == players[player].speed) {
             counter = 0;
@@ -269,23 +256,21 @@ int main (void)
             s2_state = !s2_state;
         }
         
-        // creates a timeout for the powerups, shuffles every 20 seconds.
-        if (s_timeout == 20000) {
-            s_timeout = 0;
+        // creates a timeout for the powerups, shuffles every 15 seconds.
+        if (game_time % 15) {
             shuffle_specials(specials);
         }
 		
-        // code to detect when a powerup has been picked up.
+        // code to detect and apply powerup when picked up by player 1
 		collected = collision_special(players, specials, player);
-		if (collected != 100) {
+		if (collected != -1) {
 			apply_special(&players[player], specials, collected);
-			collected = 100;
 		}
         
+        // code to detect and apply power when picked up by player 2.
 		collected = collision_special(players, specials, other_player);
-		if (collected != 100) {
+		if (collected != -1) {
 			apply_special(&players[other_player], specials, collected);
-			collected = 100;
 		}
 		
 		if (!players[player].is_runner) {
@@ -302,14 +287,17 @@ int main (void)
             players[other_player].speed = STANDARD_SPEED;
         }
 		
+        // Only resets the caught flag when the players are apart.
 		if (!player_caught(players)) {
 			caught = 0;
 		}
         
-        if (catch_timeout < 3000) {
+        // increment the counters
+        if (catch_timeout < 3000) { // Stops incrementing past a point so that it won't reset to 0
             catch_timeout++;
         }
         
+        // Cycle is 1000 Hz, or every 1 ms, so every thousand cycles should be 1 second in real time.
         if (seconds_counter == 1000) {
             seconds_counter = 0;
             game_time++;
