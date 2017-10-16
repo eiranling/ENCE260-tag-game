@@ -36,9 +36,6 @@ void turnoff_specials (special_t* special);
  */
 void shuffle_specials (special_t* specials);
 
-<<<<<<< HEAD
-int8_t collision_special (player_t* players, special_t* specials, uint8_t player);
-=======
 /* Checks the position of the player along with the position of the specials
  * if the specials are active, and a collison has occured, 
  * turn off the led of the collided with special and return the index of that special.
@@ -47,8 +44,7 @@ int8_t collision_special (player_t* players, special_t* specials, uint8_t player
  * @param the index of the player whos position is to be checked with special
  * @return the index of the special that has been collided with or -1
  */
-uint8_t collision_special (player_t* players, special_t* specials, uint8_t player);
->>>>>>> 9ccb2b6cae59bac4d5757f3e9817f9332fd2991e
+int8_t collision_special (player_t* players, special_t* specials, uint8_t player);
 
 /* Applies the speedup/slowdown special to the players speed
  * @param player: the player who's speed is to be altered
