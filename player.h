@@ -1,3 +1,7 @@
+/**
+	The player header file for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
 #ifndef PLAYER_H
 #define PLAYER_H
 
@@ -8,8 +12,8 @@
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
-static uint8_t player = 0; // set player for this unit will be according to who is host unit
-static uint8_t other_player = 1;
+extern uint8_t player;
+extern uint8_t other_player;
 
 typedef struct player_struct
 {

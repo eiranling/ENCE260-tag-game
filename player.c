@@ -1,8 +1,14 @@
+/**
+	The player module for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
 #include <stdlib.h>
 #include "led.h"
 #include "tinygl.h"
 #include "player.h"
 
+uint8_t player = 0;
+uint8_t other_player = 1;
 
 /* Checks to see if the players have ended up at the same co-ords
  * this will indicate if the runner has been caught by the chaser
@@ -87,10 +93,12 @@ void create_players (player_t* players, uint8_t PLAYER)
         uint8_t x;
         uint8_t y;
         
-        do { //randomly draw co-ords within our matrix
-            x = rand () % TINYGL_WIDTH;
-            y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && ((x == players[0].pos.x) && y == players[0].pos.y)); //make sure both players start in different spaces.
+        x = TINYGL_WIDTH * i;
+        y = TINYGL_HEIGHT * i;
+		if (x == TINYGL_WIDTH || y == TINYGL_HEIGHT) {
+			x--;
+			y--;
+		}
     
         players[i].pos.x = x;
         players[i].pos.y = y;
