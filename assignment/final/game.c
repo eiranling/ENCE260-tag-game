@@ -269,7 +269,7 @@ int main (void)
             apply_special(&players[other_player], specials, collected);
         }
         
-        // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.
+        // detects if one player has caught the other, as well as set a flag so that roles don't change more than once
         if (player_caught(players) && !caught) {
             caught = 1;
             swap(players);

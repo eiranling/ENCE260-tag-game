@@ -8,8 +8,8 @@
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
-static uint8_t player; // set player for this unit will be according to who is host unit
-static uint8_t other_player;
+static uint8_t player = 0; // set player for this unit will be according to who is host unit
+static uint8_t other_player = 1;
 
 typedef struct player_struct
 {

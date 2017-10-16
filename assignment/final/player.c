@@ -11,7 +11,11 @@
 */
 bool player_caught (player_t* players) 
 {
-    return ((players[player].pos.x == players[other_player].pos.x) && (players[player].pos.y == players[other_player].pos.y));
+    if ((players[player].pos.x == players[other_player].pos.x) && (players[player].pos.y == players[other_player].pos.y)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /* Swaps over the status of runner so the runner becomes the chaser
@@ -83,10 +87,10 @@ void create_players (player_t* players, uint8_t PLAYER)
         uint8_t x;
         uint8_t y;
         
-       // do { //randomly draw co-ords within our matrix
+        do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-      //  } while (i > 0 && ((x == players[0].pos.x) && y == players[0].pos.y)); //make sure both players start in different spaces.
+        } while (i > 0 && ((x == players[0].pos.x) && y == players[0].pos.y)); //make sure both players start in different spaces.
     
         players[i].pos.x = x;
         players[i].pos.y = y;
