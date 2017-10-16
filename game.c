@@ -77,8 +77,6 @@ void receive_IR (char* recv)
 
 void transmit_IR_dir (Direction* dir) {
     char direction = '0';
-    if (ir_uart_write_ready_p()) {
-
         if (*dir == NORTH) {
             direction = 'N';
         } else if (*dir == EAST) {
@@ -89,7 +87,6 @@ void transmit_IR_dir (Direction* dir) {
             direction = 'S';
         }
         ir_uart_putc(direction);
-    }
 }
 
 void transmit_end(void) {
@@ -138,21 +135,20 @@ int main (void)
 	
     char character = '1';
     while (!slave && !host) {
-		pacer_wait();
+        pacer_wait();
         tinygl_update ();
         navswitch_update ();
 
-        if (navswitch_push_event_p (NAVSWITCH_PUSH) && ir_uart_write_ready_p()) {
+        if (navswitch_push_event_p (NAVSWITCH_PUSH)) {
             ir_uart_putc(character);
-            if (character == '1') { // indicates this FK is a host, thus set this one to a host
-                host = 1; 
-			}
-		}
-        if (!slave && !host) {
-            if (ir_uart_read_ready_p()) {
-                character = ir_uart_getc();
-                if (character == '1') { // indicates the other fun kit is a host, thus set this one to a slave
-                    slave = 1; 
+            host = 1;
+		} else {
+            if (!slave && !host) {
+                if (ir_uart_read_ready_p()) {
+                    character = ir_uart_getc();
+                    if (character == '1') { // indicates the other fun kit is a host, thus set this one to a slave
+                        slave = 1; 
+                    }
                 }
             }
         }
@@ -176,7 +172,7 @@ int main (void)
     int8_t collected = -1;
     uint16_t catch_timeout = 3000;
     uint16_t s_counter = 0;
-    uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
+    uint16_t s_timeout = 0;
     uint16_t game_time = 0;
     uint16_t seconds_counter = 0;
 	uint16_t beep_counter = 500;
@@ -191,27 +187,14 @@ int main (void)
         tinygl_draw_point(players[player].pos, 1);
         tinygl_draw_point(players[other_player].pos, 1);
         tinygl_update();
-
-        receive_IR(&recv_char);
-        if (recv_char == 'N') {
-            players[other_player].current_direction = NORTH;
-        } else if (recv_char == 'E') {
-            players[other_player].current_direction = EAST;
-        } else if (recv_char == 'W') {
-            players[other_player].current_direction = WEST;
-        } else if (recv_char == 'S') {
-            players[other_player].current_direction = SOUTH;
-        }
-        if (slave) {
-            if (recv_char == 'X') {
-                game_time = TIME_LIMIT;
-            }
-        }
             
         // updates the player position
         if (counter == players[player].speed) {
             counter = 0;
             get_move(&players[player].current_direction);
+            if (ir_uart_read_ready_p()) {
+                recv_char = ir_uart_getc();
+            }
             transmit_IR_dir(&players[player].current_direction);
             tinygl_draw_point(players[player].pos, 0);
             move_player(players, &players[player].current_direction, &player);
@@ -219,6 +202,17 @@ int main (void)
             tinygl_update();
         }
         
+        receive_IR(&recv_char);
+        if (recv_char == 'N') {
+           players[other_player].current_direction = NORTH;
+        } else if (recv_char == 'E') {
+           players[other_player].current_direction = EAST;
+        } else if (recv_char == 'W') {
+            players[other_player].current_direction = WEST;
+        } else if (recv_char == 'S') {
+            players[other_player].current_direction = SOUTH;
+        }
+
         // updates the second player's position
         if (p2_counter == players[other_player].speed) {
             p2_counter = 0;
