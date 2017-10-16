@@ -3,8 +3,6 @@
 #include "tinygl.h"
 #include "player.h"
 
-#define NUM_PLAYERS 2
-#define STANDARD_SPEED 200;
 
 /* Checks to see if the players have ended up at the same co-ords
  * this will indicate if the runner has been caught by the chaser
@@ -89,10 +87,10 @@ void create_players (player_t* players, uint8_t PLAYER)
         uint8_t x;
         uint8_t y;
         
-        //do { //randomly draw co-ords within our matrix
+        do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        //} while (player_caught(players)); //make sure both players start in different spaces.
+        } while (i > 0 && player_caught(players)); //make sure both players start in different spaces.
     
         players[i].pos.x = x;
         players[i].pos.y = y;

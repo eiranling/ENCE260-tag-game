@@ -5,6 +5,11 @@
 #include "tinygl.h"
 #include "player.h" 
 
+#define NUM_SPECIALS 2
+#define CHANGE_SPEED 50
+#define MAX_SPEED 50
+#define MIN_SPEED 350
+
 typedef enum{SPEED_UP, SLOW_DOWN} Special;
     
 typedef struct special_struct

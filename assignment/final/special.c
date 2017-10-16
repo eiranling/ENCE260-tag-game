@@ -2,11 +2,7 @@
 #include "special.h"
 #include "tinygl.h"
 
-#define NUM_SPECIALS 2
-#define UP_SPEED  50// set power up speed
-#define DOWN_SPEED  50//set power down speed
-#define MAX_SPEED  350 
-#define MIN_SPEED 50
+
 
 /* Turns on the LED relating to the pos of the special
  * @param the special that needs turning on.
@@ -53,7 +49,7 @@ void shuffle_specials (special_t* specials)
  * @param the index of the player whos position is to be checked with special
  * @return the index of the special that has been collided with or -1
  */
-uint8_t collision_special (player_t* players, special_t* specials, uint8_t player)
+int8_t collision_special (player_t* players, special_t* specials, uint8_t player)
 {
     uint8_t i;
     
@@ -64,7 +60,7 @@ uint8_t collision_special (player_t* players, special_t* specials, uint8_t playe
             return i;
         }
     }
-    return 100;
+    return -1;
 }  
 
 /* Applies the speedup/slowdown special to the players speed
@@ -76,16 +72,16 @@ void apply_special (player_t* player, special_t* specials, uint8_t collision)
 {
 
     if (specials[collision].special == SPEED_UP) {
-            if (player->speed - 50 >= 50) {
-            player->speed -= 50;
+            if (player->speed - CHANGE_SPEED >= MAX_SPEED) {
+            player->speed -= CHANGE_SPEED;
         } else {
-            player->speed = 50;
+            player->speed = CHANGE_SPEED;
         }
     } else {
-        if (player->speed + 50 <= 350) {
-            player->speed += 50;
+        if (player->speed + CHANGE_SPEED <= MIN_SPEED) {
+            player->speed += CHANGE_SPEED;
         } else {
-            player->speed = 1000;
+            player->speed = MIN_SPEED;
         }
     }
 
@@ -108,7 +104,7 @@ void create_specials (special_t* specials)
         do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && ((x == specials[0].pos.x) && y == specials[0].pos.y )); //make sure both specials appear in different spaces.
+        } while (i > 0 && ((x == specials[0].pos.x) && y == specials[0].pos.y)); //make sure both specials appear in different spaces.
         
         specials[i].pos.x = x;
         specials[i].pos.y = y;

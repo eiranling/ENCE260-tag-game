@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#define NUM_PLAYERS 2
+#define STANDARD_SPEED 200
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
 typedef struct player_struct

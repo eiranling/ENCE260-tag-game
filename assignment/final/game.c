@@ -22,8 +22,6 @@
 
 #define DISPLAY_TASK_RATE 144 // Update the display at 144Hz to reduce flickering.
 
-char input[NUM_IR_CODES] = {'N', 'S', 'E', 'W', 'X', 'U', 'D'};
-
 /* Polls the navswitch and sets the direction for the player
  * to move in
  * @param the current direction to be updated
@@ -275,21 +273,13 @@ int main (void)
         
         // code to detect when a powerup has been picked up.
         collected = collision_special(players, specials, player);
-        if (collected != 100) {
+        if (collected != -1) {
             apply_special(&players[player], specials, collected);
-            collected = 100;
         }
         
         collected = collision_special(players, specials, other_player);
-        if (collected != 100) {
+        if (collected != -1) {
             apply_special(&players[other_player], specials, collected);
-            collected = 100;
-        }
-        
-        collected = collision_special(players, specials, other_player);
-        if (collected != 100) {
-            apply_special(&players[other_player], specials, collected);
-            collected = 100;
         }
         
         if (!players[player].is_runner) {
