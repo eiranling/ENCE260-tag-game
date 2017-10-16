@@ -66,7 +66,6 @@ void receive_IR (char* recv)
     }
 }
 
-
 void transmit_IR_dir (Direction* dir) {
     char direction = '0';
     if (ir_uart_write_ready_p()) {
@@ -85,11 +84,11 @@ void transmit_IR_dir (Direction* dir) {
 }
 
 void transmit_end(void) {
-    ir_uart_putc('X');
+    ir_uart_putc_nocheck('X');
 }
 
 void transmit_start(void) {
-    ir_uart_putc('A');
+    ir_uart_putc_nocheck('A');
 }
 
 void display_character (char character)
@@ -165,6 +164,7 @@ int main (void)
         player = 1;
         other_player = 0;
     }
+    
     led_init();
     led_set(LED1, 0);
     create_players (players, player);
@@ -195,7 +195,6 @@ int main (void)
     }
     
     transmit_start();
-
     
     while (game_time <= TIME_LIMIT) // game runs for a minute.
     {
@@ -258,7 +257,6 @@ int main (void)
             s_timeout = 0;
             shuffle_specials(specials);
         }
-        
         // code to detect and apply powerup when picked up by player 1
         collected = collision_special(players, specials, player);
         if (collected != -1) {
@@ -269,12 +267,6 @@ int main (void)
         collected = collision_special(players, specials, other_player);
         if (collected != -1) {
             apply_special(&players[other_player], specials, collected);
-        }
-        
-        if (!players[player].is_runner) {
-            led_set(LED1, 0);
-        } else {
-            led_set(LED1, 1);
         }
         
         // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.

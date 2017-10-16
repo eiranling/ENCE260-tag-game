@@ -11,12 +11,7 @@
 */
 bool player_caught (player_t* players) 
 {
-    bool caught = false;
-    if ((players[0].pos.x == players[1].pos.x) && (players[0].pos.y == players[1].pos.y))
-    { 
-        caught = true;
-    }
-    return caught;
+    return ((players[player].pos.x == players[other_player].pos.x) && (players[player].pos.y == players[other_player].pos.y));
 }
 
 /* Swaps over the status of runner so the runner becomes the chaser
@@ -25,6 +20,7 @@ bool player_caught (player_t* players)
 */
 void swap (player_t* players) 
 {
+    
     if (players[player].is_runner) {
         players[player].is_runner = 0;
         players[other_player].is_runner = 1;
