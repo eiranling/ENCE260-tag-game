@@ -271,11 +271,14 @@ int main (void)
             apply_special(&players[other_player], specials, collected);
         }
         
-        if (!players[player].is_runner) {
+        /*
+        if (players[player].is_runner) {
             led_set(LED1, 0);
         } else {
             led_set(LED1, 1);
         }
+        */
+        
         
         // detects if one player has caught the other, as well as have a cooldown to ensure that the roles don't switch too quickly.
         if (player_caught(players) && !caught) {
