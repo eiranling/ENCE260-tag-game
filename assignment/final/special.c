@@ -1,3 +1,7 @@
+/**
+	The special module for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
 #include <stdlib.h> 
 #include "special.h"
 #include "tinygl.h"

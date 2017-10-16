@@ -1,3 +1,8 @@
+/**
+	The main module for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
+
 #include <stdlib.h>
 #include "system.h"
 #include "tinygl.h"
@@ -21,6 +26,8 @@
 
 #define DISPLAY_TASK_RATE 1000 // Update the display at 144Hz to reduce flickering.
 
+extern uint8_t player;
+extern uint8_t other_player;
 /* Polls the navswitch and sets the direction for the player
  * to move in
  * @param the current direction to be updated

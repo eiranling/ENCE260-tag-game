@@ -1,3 +1,7 @@
+/**
+	The player header file for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
 #ifndef PLAYER_H
 #define PLAYER_H
 

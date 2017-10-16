@@ -1,8 +1,14 @@
+/**
+	The player module for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
 #include <stdlib.h>
 #include "led.h"
 #include "tinygl.h"
 #include "player.h"
 
+extern uint8_t player;
+extern uint8_t other_player;
 
 /* Checks to see if the players have ended up at the same co-ords
  * this will indicate if the runner has been caught by the chaser

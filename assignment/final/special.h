@@ -1,3 +1,7 @@
+/**
+	The special header file for the tag game. 
+	Written by Susan Collishaw and Eiran Ling
+*/
 #ifndef SPECIAL_H
 #define SPECIAL_H
 
