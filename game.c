@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include "system.h"
+#include "pio.h"
 #include "tinygl.h"
 #include "navswitch.h"
 #include "ir_uart.h"
@@ -23,11 +24,12 @@
 
 /* Define polling rates in Hz  */
 #define NAVSWITCH_TASK_RATE 144 //Poll the NAVSWITCH at 1000 Hz
+#define PIEZO1_PIO PIO_DEFINE (PORT_D, 4)
+#define PIEZO2_PIO PIO_DEFINE (PORT_D, 6)
 
+#define TONE_FREQUENCY 440
 #define DISPLAY_TASK_RATE 1000 // Update the display at 144Hz to reduce flickering.
 
-extern uint8_t player;
-extern uint8_t other_player;
 /* Polls the navswitch and sets the direction for the player
  * to move in
  * @param the current direction to be updated
@@ -119,6 +121,8 @@ int main (void)
     
     // initialize things
     system_init ();
+	pio_config_set (PIEZO1_PIO, PIO_OUTPUT_LOW);
+    pio_config_set (PIEZO2_PIO, PIO_OUTPUT_LOW);
     ir_uart_init(); 
 
     tinygl_init (DISPLAY_TASK_RATE);
@@ -175,6 +179,7 @@ int main (void)
     uint16_t s_timeout = 0; // time out for the specials TODO: remove and replace with game_time
     uint16_t game_time = 0;
     uint16_t seconds_counter = 0;
+	uint16_t beep_counter = 500;
     bool caught = 0;
     bool s1_state = 1;
     bool s2_state = 1;
@@ -265,7 +270,17 @@ int main (void)
 			} else {
 				led_set(LED1, 0);
 			}
+			beep_counter = 0;
         }
+		
+		if (caught == 1 || beep_counter < 500) {
+			pio_output_low(PIEZO1_PIO);
+			pio_output_low(PIEZO2_PIO);
+			beep_counter++;
+		} else {
+			pio_output_high(PIEZO1_PIO);
+			pio_output_high(PIEZO2_PIO);
+		}
         
         // Only resets the caught flag when the players are apart.
         if (!player_caught(players)) {
@@ -282,26 +297,6 @@ int main (void)
             seconds_counter = 0;
             game_time++;
         }
-		
-		/*
-		if (seconds_counter % 200 == 0) {
-			if (host) {
-				if (players[player].is_runner) {
-					ir_uart_putc('0');
-				} else {
-					ir_uart_putc('1');
-				}
-			} else {
-				receive_IR(&recv_char);
-				if (recv_char == '0') {
-					players[other_player].is_runner = 1;
-					players[player].is_runner = 0;
-				} else if (recv_char == '1') {
-					players[player].is_runner = 0;
-					players[other_player].is_runner = 1;
-				}
-			}
-		}*/
         
         counter++;
         p2_counter++;

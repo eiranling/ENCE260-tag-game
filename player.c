@@ -7,8 +7,8 @@
 #include "tinygl.h"
 #include "player.h"
 
-extern uint8_t player;
-extern uint8_t other_player;
+uint8_t player = 0;
+uint8_t other_player = 1;
 
 /* Checks to see if the players have ended up at the same co-ords
  * this will indicate if the runner has been caught by the chaser

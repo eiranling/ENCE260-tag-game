@@ -12,8 +12,8 @@
 
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
-static uint8_t player = 0;
-static uint8_t other_player = 1;
+extern uint8_t player;
+extern uint8_t other_player;
 
 typedef struct player_struct
 {
