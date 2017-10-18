@@ -1,6 +1,14 @@
 /**
-	The player header file for the tag game. 
-	Written by Susan Collishaw and Eiran Ling
+    @file player.h
+	@authors Susan Collishaw and Eiran Ling
+    @date 18 Oct 2017
+	@brief The player module for the tag game. 
+
+    @defgroup player The player module for the tag game
+
+    This module handles most of the player movement and interaction
+    around the game board. It also has two global variables that are
+    externally accessed from both game.c and player.c
 */
 #ifndef PLAYER_H
 #define PLAYER_H
@@ -10,16 +18,26 @@
 #define NUM_PLAYERS 2
 #define STANDARD_SPEED 200
 
+// Direction enum
 typedef enum {NORTH, EAST, WEST, SOUTH} Direction;
 
+// define two externally accessed global variables
 extern uint8_t player;
 extern uint8_t other_player;
 
+// Okayer structure
 typedef struct player_struct
 {
+    // Player position
     tinygl_point_t pos;
+
+    // Whether the player is 'it'
     bool is_runner;
+
+    // Speed of the player
     uint16_t speed;
+
+    // Direction that the player is moving in.
     Direction current_direction;
 } player_t;
 

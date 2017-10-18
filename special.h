@@ -1,6 +1,13 @@
 /**
-	The special header file for the tag game. 
-	Written by Susan Collishaw and Eiran Ling
+    @file special.h
+	@authors Susan Collishaw and Eiran Ling
+    @date 18 Oct 2017
+	@brief The specials module for the tag game. 
+
+    @defgroup special The specials module for the tag game
+    
+    This modules handles the creation and interaction of specials,
+    including the speed up and speed down of players
 */
 #ifndef SPECIAL_H
 #define SPECIAL_H
@@ -14,12 +21,19 @@
 #define MAX_SPEED 50
 #define MIN_SPEED 350
 
+// special enum
 typedef enum{SPEED_UP, SLOW_DOWN} Special;
-    
+
+// Specials structure
 typedef struct special_struct
 {
+    // Position of the struct
     tinygl_point_t pos;
+
+    // What type of special it is, determined by the Special enum
     Special special;
+
+    // whether or not the special is active on the field.
     bool is_active;
 } special_t;
 

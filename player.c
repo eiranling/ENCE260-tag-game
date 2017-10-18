@@ -1,12 +1,15 @@
 /**
-	The player module for the tag game. 
-	Written by Susan Collishaw and Eiran Ling
+    @file player.c
+	@authors Susan Collishaw and Eiran Ling
+    @date 18 Oct 2017
+	@brief The player module for the tag game. 
 */
 #include <stdlib.h>
 #include "led.h"
 #include "tinygl.h"
 #include "player.h"
 
+// Define global variables that have been declared as 'extern' in player.h
 uint8_t player = 0;
 uint8_t other_player = 1;
 

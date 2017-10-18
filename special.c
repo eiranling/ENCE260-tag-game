@@ -1,6 +1,8 @@
 /**
-	The special module for the tag game. 
-	Written by Susan Collishaw and Eiran Ling
+    @file special.c
+	@authors Susan Collishaw and Eiran Ling
+    @date 18 Oct 2017
+	@brief The specials module for the tag game. 
 */
 #include <stdlib.h> 
 #include "special.h"
@@ -108,7 +110,7 @@ void create_specials (special_t* specials)
         do { //randomly draw co-ords within our matrix
             x = rand () % TINYGL_WIDTH;
             y = rand () % TINYGL_HEIGHT;
-        } while (i > 0 && ((x == specials[0].pos.x) && y == specials[0].pos.y)); //make sure both specials appear in different spaces.
+        } while (i > 0 && ((x == specials[SPEED_UP].pos.x) && y == specials[SPEED_UP].pos.y)); //make sure both specials appear in different spaces.
         
         specials[i].pos.x = x;
         specials[i].pos.y = y;

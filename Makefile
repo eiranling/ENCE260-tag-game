@@ -1,6 +1,6 @@
 # File:   Makefile
-# Author: M. P. Hayes, UCECE
-# Date:   12 Sep 2010
+# Author: M. P. Hayes, UCECE, Edited by Eiran Ling and Susan Collishaw
+# Date:   12 Sep 2010, updated on 18 Oct 2017
 # Descr:  Makefile for game
 
 # Definitions.
@@ -67,8 +67,11 @@ player.o: player.c player.h
 special.o: special.c special.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
+transmission.o: transmission.c transmission.h ../../drivers/avr/system.h ../../drivers/avr/ir_uart.h player.h
+    $(CC) -c $(CFLAGS) $< -o $@
+
 # Link: create ELF output file from object files.
-game.out: game.o system.o ir_uart.o pio.o prescale.o timer.o timer0.o usart1.o display.o ledmat.o tinygl.o navswitch.o pacer.o font.o led.o player.o special.o
+game.out: game.o system.o ir_uart.o pio.o prescale.o timer.o timer0.o usart1.o display.o ledmat.o tinygl.o navswitch.o pacer.o font.o led.o player.o special.o transmission.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 

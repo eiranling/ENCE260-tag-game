@@ -1,6 +1,13 @@
 /**
 	The main module for the tag game. 
-	Written by Susan Collishaw and Eiran Ling
+	@authors: Susan Collishaw, Eiran Ling
+    @date: 18 Oct 2017
+    @brief: The main game
+
+    @defgroup game The main game
+
+    This module handles most if not all the function calls required to
+    run the game
 */
 
 #include <stdlib.h>
@@ -9,12 +16,15 @@
 #include "tinygl.h"
 #include "navswitch.h"
 #include "ir_uart.h"
-#include "task.h"
 #include "pacer.h"
 #include "led.h"
 #include "player.h"
 #include "special.h"
+#include "transmission.h"
 #include "../fonts/font5x7_1.h"
+
+#define OVERFLOW 65535
+#define SHUFFLE_TIME 15000
 
 #define NUM_PLAYERS 2 //max players
 #define NUM_SPECIALS 2 //max specials
@@ -22,13 +32,21 @@
 #define TIME_LIMIT 60 // 1 min in seconds
 #define STANDARD_SPEED 200// set standard speed
 
-/* Define polling rates in Hz  */
-#define NAVSWITCH_TASK_RATE 144 //Poll the NAVSWITCH at 1000 Hz
 #define PIEZO1_PIO PIO_DEFINE (PORT_D, 4)
 #define PIEZO2_PIO PIO_DEFINE (PORT_D, 6)
 
-#define TONE_FREQUENCY 440
-#define DISPLAY_TASK_RATE 1000 // Update the display at 144Hz to reduce flickering.
+// Pace the loop at 1000Hz, or 1 ms.
+#define PACER_RATE 1000
+// Update the display at 1000Hz to negate flickering.
+#define DISPLAY_TASK_RATE 1000
+// Blink an LED at a slow rate
+#define SLOW_BLINK_RATE PACER_RATE/2
+// Blink an LED at a faster rate
+#define FAST_BLINK_RATE PACER_RATE/4
+// Defines how long the buzzer should beep for.
+#define BEEP_TIME PACER_RATE/2
+
+#define DISPLAY_TEXT_SPEED 10
 
 /* Polls the navswitch and sets the direction for the player
  * to move in
@@ -68,55 +86,17 @@ void update_game(char* received, player_t* players, Direction* move, uint8_t* ot
             
 }
 
-void receive_IR (char* recv) 
-{
-    if (ir_uart_read_ready_p()) {
-        *recv = ir_uart_getc();
-    }
-}
-
-void transmit_IR_dir (Direction* dir) {
-    char direction = '0';
-        if (*dir == NORTH) {
-            direction = 'N';
-        } else if (*dir == EAST) {
-            direction = 'E';
-        } else if (*dir == WEST) {
-            direction = 'W';
-        } else if (*dir == SOUTH) {
-            direction = 'S';
-        }
-        ir_uart_putc(direction);
-}
-
-void transmit_end(void) {
-    ir_uart_putc_nocheck('X');
-}
-
-void transmit_start(void) {
-    ir_uart_putc_nocheck('A');
-}
-
-void display_character (char character)
-{
-    char buffer[2];
-    buffer[0] = character;
-    buffer[1] = '\0';
-    tinygl_text (buffer);
-}
-
 int main (void)
 {
     
     // create variables for game
     player_t players[NUM_PLAYERS];
-    
     special_t specials[NUM_SPECIALS];
 
     bool host = 0;
     bool slave = 0;
     
-    // initialize things
+    // initialize all the required peripherals.
     system_init ();
 	pio_config_set (PIEZO1_PIO, PIO_OUTPUT_LOW);
     pio_config_set (PIEZO2_PIO, PIO_OUTPUT_LOW);
@@ -125,10 +105,10 @@ int main (void)
     tinygl_init (DISPLAY_TASK_RATE);
     tinygl_font_set (&font5x7_1);
 	tinygl_text_mode_set(TINYGL_TEXT_MODE_SCROLL);
-    tinygl_text_speed_set(10);
+    tinygl_text_speed_set(DISPLAY_TEXT_SPEED);
     navswitch_init();
     
-    pacer_init(1000);
+    pacer_init(PACER_RATE);
     
     create_specials (specials);
 	tinygl_text("Push button to start");
@@ -165,17 +145,20 @@ int main (void)
     
     led_init();
     led_set(LED1, 0);
-    create_players (players, player);
 
+    // Create the players
+    create_players (players, player);
+    
+    // Declare and initialize variables
     uint16_t counter = 0;
     uint16_t p2_counter = 0;
     int8_t collected = -1;
-    uint16_t catch_timeout = 3000;
+    uint16_t catch_timeout = OVERFLOW;
     uint16_t s_counter = 0;
     uint16_t s_timeout = 0;
     uint16_t game_time = 0;
     uint16_t seconds_counter = 0;
-	uint16_t beep_counter = 500;
+	uint16_t beep_counter = BEEP_TIME;
     bool caught = 0;
     bool s1_state = 1;
     bool s2_state = 1;
@@ -202,6 +185,7 @@ int main (void)
             tinygl_update();
         }
         
+        // Retrieve the character from the buffer and translate it into a direction.
         receive_IR(&recv_char);
         if (recv_char == 'N') {
            players[other_player].current_direction = NORTH;
@@ -223,20 +207,20 @@ int main (void)
         }
         
         // cause the first powerup to blink slowly
-        if (s_counter % 500 == 0 && specials[1].is_active == 1) {
+        if (s_counter % SLOW_BLINK_RATE == 0 && specials[SLOW_DOWN].is_active == 1) {
             s_counter = 0;
-            tinygl_draw_point(specials[1].pos, !s1_state);
+            tinygl_draw_point(specials[SLOW_DOWN].pos, !s1_state);
             s1_state = !s1_state;
         }
         
         // cause the second powerup to blink faster
-        if (s_counter % 250 == 0 && specials[0].is_active == 1) {
-            tinygl_draw_point(specials[0].pos, !s2_state);
+        if (s_counter % FAST_BLINK_RATE == 0 && specials[SPEED_UP].is_active == 1) {
+            tinygl_draw_point(specials[SPEED_UP].pos, !s2_state);
             s2_state = !s2_state;
         }
         
         // creates a timeout for the powerups, shuffles every 15 seconds.
-        if (s_timeout == 15000) {
+        if (s_timeout == SHUFFLE_TIME) {
             s_timeout = 0;
             shuffle_specials(specials);
         }
@@ -260,14 +244,17 @@ int main (void)
             players[player].speed = STANDARD_SPEED;
             players[other_player].speed = STANDARD_SPEED;
 			if (players[player].is_runner) {
+                // Turn LED on if the player is chaser
 				led_set(LED1, 1);
 			} else {
+                // Turn LED off if the player is not chaser.
 				led_set(LED1, 0);
 			}
 			beep_counter = 0;
         }
 		
-		if (caught == 1 || beep_counter < 500) {
+        // Plays a soft beep for half a second when the players are caught.
+		if (caught == 1 || beep_counter < BEEP_TIME) {
 			pio_output_low(PIEZO1_PIO);
 			pio_output_low(PIEZO2_PIO);
 			beep_counter++;
@@ -282,12 +269,12 @@ int main (void)
         }
         
         // increment the counters
-        if (catch_timeout < 3000) { // Stops incrementing past a point so that it won't reset to 0
+        if (catch_timeout < OVERFLOW) { // Stops incrementing past a point so that it won't reset to 0
             catch_timeout++;
         }
         
-        // Cycle is 1000 Hz, or every 1 ms, so every thousand cycles should be 1 second in real time.
-        if (seconds_counter == 1000) {
+        // Counts when a second in real time has passed.
+        if (seconds_counter == PACER_RATE) {
             seconds_counter = 0;
             game_time++;
         }
@@ -299,17 +286,12 @@ int main (void)
         seconds_counter++;
     }
     
-    if (host) {
-        transmit_end();
-    }
-    
     if (players[player].is_runner) {
         tinygl_text("YOU LOSE");
     } else {
         tinygl_text("YOU WIN");
     }
     
-    pacer_init(1000);
     while (1) {
         pacer_wait();
         tinygl_update();
