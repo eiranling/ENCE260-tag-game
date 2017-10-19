@@ -5,6 +5,8 @@
     @brief The transmission module for the tag game
 */
 
+#include "ir_uart.h"
+#include "player.h"
 
 /* Reads a char from the IR buffer */
 void receive_IR (char* recv) 

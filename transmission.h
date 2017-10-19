@@ -1,3 +1,14 @@
+/**
+    @file transmission.h
+	@authors Susan Collishaw and Eiran Ling
+    @date 18 Oct 2017
+	@brief The transmisison module for the tag game. 
+
+    @defgroup transmission The transmission module for the tag game
+
+    This module handles most of the IR transmission and reception for the
+	tag game.
+*/
 #ifndef TRANS_H
 #define TRANS_H
 
@@ -20,4 +31,5 @@ void transmit_IR_dir (Direction* dir);
 Transmits and 'A' to signal that the game has ended.
 */
 void transmit_start(void);
+#endif
 
